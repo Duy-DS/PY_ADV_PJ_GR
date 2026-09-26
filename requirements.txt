@@ -1,1 +1,9 @@
 # Viết các thư viện cần thiết ở đây
+
+opencv-python
+mediapipe
+numpy
+pyyaml
+scikit-learn
+pandas
+matplotlib

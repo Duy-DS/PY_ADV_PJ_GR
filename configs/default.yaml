@@ -1,0 +1,10 @@
+face_detection:
+  min_detection_confidence: 0.5
+eye:
+  ear_threshold: 0.25 # Ngưỡng EAR phân biệt open/closed
+  closure_time_threshold: 1.5 # Giây (nhắm mắt liên tục tính là drowsy)
+mouth:
+  mar_threshold: 0.6 # Ngưỡng MAR phân biệt ngáp
+  yawn_duration_threshold: 2.0 # Giây ngáp liên tục
+alert:
+  cooldown: 3.0

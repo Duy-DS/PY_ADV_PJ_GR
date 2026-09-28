@@ -1,9 +1,12 @@
 # Viết các thư viện cần thiết ở đây
 
-opencv-python
+opencv-python>=4.10,<6
 mediapipe
-numpy
+numpy>=2.0,<3
 pyyaml
 scikit-learn
 pandas
 matplotlib
+pytest>=8.3,<10
+flake8>=7.1,<8
+black>=24.10,<27

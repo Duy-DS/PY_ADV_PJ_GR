@@ -1,4 +1,4 @@
-# Viết các thư viện cần thiết ở đây
+# Runtime dependencies (including T0202 inventory and T0301 acquisition)
 
 opencv-python>=4.10,<6
 mediapipe
@@ -7,6 +7,12 @@ pyyaml
 scikit-learn
 pandas
 matplotlib
+
+# T0202 exploratory notebook environment
+jupyterlab>=4,<5
+ipykernel>=6,<8
+
+# Test and code-quality dependencies
 pytest>=8.3,<10
 flake8>=7.1,<8
 black>=24.10,<27

@@ -92,3 +92,9 @@ def calculate_eye_state(left_eye_points, right_eye_points):
         "ear": float(average_ear),
         "eye_state": eye_state
     }
+
+class EyeFeatureExtractor:
+    def __init__(self, ear_threshold=None):
+        self.ear_threshold = ear_threshold
+    def compute(self, left_pts, right_pts):
+        return calculate_eye_state(left_pts, right_pts)

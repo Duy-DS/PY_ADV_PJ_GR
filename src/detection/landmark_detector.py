@@ -68,3 +68,17 @@ class LandmarkDetector:
 
     def release(self):
         self.landmarker.close()
+
+    def extract_landmarks(self, frame):
+        res = self.process(frame)
+        valid = bool(res.get('landmark_valid', False))
+        return {
+            'face_detected': valid,
+            'landmark_valid': valid,
+            'left_eye_landmarks': res.get('left_eye_points'),
+            'right_eye_landmarks': res.get('right_eye_points'),
+            'mouth_landmarks': res.get('mouth_points'),
+            'left_eye_points': res.get('left_eye_points'),
+            'right_eye_points': res.get('right_eye_points'),
+            'mouth_points': res.get('mouth_points'),
+        }

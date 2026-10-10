@@ -97,3 +97,9 @@ def calculate_mouth_state(mouth_points, landmark_valid=True):
         "mar": float(mar),
         "mouth_state": mouth_state
     }
+
+class MouthFeatureExtractor:
+    def __init__(self, mar_threshold=None):
+        self.mar_threshold = mar_threshold
+    def compute(self, mouth_pts, landmark_valid=True):
+        return calculate_mouth_state(mouth_pts, landmark_valid=landmark_valid)

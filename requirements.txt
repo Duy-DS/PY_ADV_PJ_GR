@@ -1,18 +1,21 @@
-# Runtime dependencies (including T0202 inventory and T0301 acquisition)
-
+# Core Computer Vision & Pipeline Dependencies
 opencv-python>=4.10,<6
-mediapipe
+mediapipe>=0.10,<2
 numpy>=2.0,<3
-pyyaml
-scikit-learn
-pandas
-matplotlib
+pydantic>=2.0,<3
+pyyaml>=6.0,<7
 
-# T0202 exploratory notebook environment
+# Data Science & Feature Analysis
+scikit-learn>=1.5,<2
+pandas>=2.0,<4
+matplotlib>=3.8,<4
+scipy>=1.13,<2
+
+# T0202 Exploratory Notebook Environment
 jupyterlab>=4,<5
 ipykernel>=6,<8
 
-# Test and code-quality dependencies
+# Test and Code-Quality Dependencies
 pytest>=8.3,<10
 flake8>=7.1,<8
 black>=24.10,<27

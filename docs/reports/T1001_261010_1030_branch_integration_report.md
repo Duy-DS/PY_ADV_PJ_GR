@@ -3,7 +3,7 @@
 - **Mã định danh nhiệm vụ (Task ID)**: `T1001`
 - **Gói công việc (Work Package)**: `WP10` (Core Facial Analysis Prototype Integration - PoC)
 - **Cột mốc (Milestone)**: `M03` (Facial Analysis Prototype)
-- **Nhánh tích hợp mục tiêu**: `feature/T1001-frame-pipeline-poc`
+- **Nhánh tích hợp mục tiêu**: `feat/T1001-frame-pipeline-poc`
 - **Thời gian khởi tạo**: `2026-10-10 10:30:00+07:00`
 - **Vai trò thực hiện**: Lead AI DevOps & Systems Architect (Antigravity Agent)
 
@@ -11,7 +11,7 @@
 
 ## 1. TỔNG QUAN VÀ MỤC TIÊU TÍCH HỢP
 
-Nhằm chuẩn bị môi trường chuẩn xác, sạch và đầy đủ cho việc phát triển và kiểm thử tích hợp toàn bộ pipeline phân tích khuôn mặt (Task `T1001`), toàn bộ các nhánh tính năng upstream đã hoàn thành từ các thành viên trong nhóm đã được rà soát, kiểm toán và hợp nhất tuần tự vào nhánh làm việc chuyên dụng `feature/T1001-frame-pipeline-poc`.
+Nhằm chuẩn bị môi trường chuẩn xác, sạch và đầy đủ cho việc phát triển và kiểm thử tích hợp toàn bộ pipeline phân tích khuôn mặt (Task `T1001`), toàn bộ các nhánh tính năng upstream đã hoàn thành từ các thành viên trong nhóm đã được rà soát, kiểm toán và hợp nhất tuần tự vào nhánh làm việc chuyên dụng `feat/T1001-frame-pipeline-poc`.
 
 ### Nguyên tắc bảo đảm (Guardrails Enforcement):
 1. **Tuân thủ ranh giới Đỏ (Red Line)**: Tuyệt đối không can thiệp, commit hay push trực tiếp vào nhánh `main`.
@@ -143,4 +143,4 @@ tests/unit/T1201_041026_test_geometry.py::test_euclidean_distance_2d_with_numeri
 
 1. **Trạng thái kho mã**: Hoàn toàn sạch sẽ, không có file nhị phân lớn hoặc file untracked vi phạm quy ước.
 2. **Trạng thái hồi quy**: Đạt chuẩn chất lượng 100% Pass (49/49 tests passed).
-3. **Mức độ sẵn sàng**: Nhánh `feature/T1001-frame-pipeline-poc` đã sẵn sàng 100% cho việc triển khai kịch bản kiểm thử tích hợp pipeline PoC (Task `T1001` - Milestone `M03`).
+3. **Mức độ sẵn sàng**: Nhánh `feat/T1001-frame-pipeline-poc` đã sẵn sàng 100% cho việc triển khai kịch bản kiểm thử tích hợp pipeline PoC (Task `T1001` - Milestone `M03`).

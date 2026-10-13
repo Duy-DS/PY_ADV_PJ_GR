@@ -23,17 +23,14 @@ class FaceDetector:
 
     def process(self, frame: np.ndarray) -> Dict[str, Any]:
         """Phát hiện khuôn mặt tài xế và trả về bounding box."""
-        # Chuyển đổi frame sang định dạng mp.Image
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
 
         results = self.detector.detect(mp_image)
 
-        # Trả về UNKNOWN nếu không có mặt (FReq004)
         if not results.detections:
             return {"face_detected": False, "state": "UNKNOWN", "bbox": None}
 
-        # Lấy bounding box của khuôn mặt đầu tiên (Tasks API trả về pixel tuyệt đối)
         bbox = results.detections[0].bounding_box
         x, y = max(0, bbox.origin_x), max(0, bbox.origin_y)
 

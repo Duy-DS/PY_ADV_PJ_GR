@@ -1,124 +1,163 @@
-import math
+"""Theo dõi ngáp và cửa sổ trượt theo thời gian video gốc."""
+
 import time
 from collections import deque
-from src.utils.config import load_config
+from dataclasses import asdict, dataclass
+from typing import Optional
+
+from src.utils.config import (
+    TemporalSettings,
+    load_config,
+    numeric_setting,
+    validate_timestamp,
+)
 
 
-# Lớp theo dõi thời lượng và tần suất ngáp theo chuỗi thời gian.
+@dataclass(frozen=True)
+class YawningResult:
+    """Kết quả ngáp typed.
+
+    Parameters: Sự kiện, thời lượng, tổng số và số lần trong cửa sổ.
+    Returns: Snapshot bất biến.
+    Raises: Không có.
+    """
+
+    yawn_event: bool
+    yawn_duration: float
+    yawn_count: int
+    yawn_frequency: int
+
+
 class YawningTracker:
-    def __init__(self):
-        # Đọc cấu hình từ file YAML
-        config = load_config()
+    """Theo dõi một sự kiện mỗi chu kỳ miệng mở.
 
-        mouth_config = config.get("mouth", {})
+    Parameters: settings dùng chung hoặc None cho YAML mặc định.
+    Returns: Tracker có reset/suspend/resume.
+    Raises: ValueError nếu cấu hình sai.
+    """
 
-        # Lấy ngưỡng thời lượng ngáp từ cấu hình (mặc định 2.0 giây)
-        self.yawn_duration_threshold = float(
-            mouth_config.get("yawn_duration_threshold", 2.0)
-        )
+    def __init__(self, settings: Optional[TemporalSettings] = None):
+        """Đọc thời lượng và cửa sổ bắt buộc từ cấu hình.
 
-        # Lấy khoảng thời gian trượt (time window) để tính tần suất ngáp (mặc định 60 giây)
-        self.time_window = float(
-            mouth_config.get("yawn_time_window", 60.0)
-        )
-
-        # Kiểm tra các ngưỡng phải là số hữu hạn và hợp lệ
-        if (
-            not math.isfinite(self.yawn_duration_threshold)
-            or self.yawn_duration_threshold < 0
-        ):
-            raise ValueError(
-                "mouth.yawn_duration_threshold must be a finite, non-negative number"
+        Parameters: settings hoặc None.
+        Returns: Không có.
+        Raises: OSError, ValueError nếu cấu hình sai.
+        """
+        if settings is None:
+            config = load_config()
+            self.yawn_duration_threshold = numeric_setting(
+                config, "mouth", "yawn_duration_threshold"
             )
-
-        if not math.isfinite(self.time_window) or self.time_window <= 0:
-            raise ValueError(
-                "mouth.yawn_time_window must be a finite, positive number"
+            self.time_window = numeric_setting(
+                config, "mouth", "yawn_frequency_window", positive=True
             )
+        else:
+            self.yawn_duration_threshold = settings.yawn_duration_threshold
+            self.time_window = settings.yawn_frequency_window
+        self.reset()
 
-        # Thời điểm bắt đầu lần há miệng / ngáp hiện tại
+    def reset(self):
+        """Xóa chu kỳ, bộ đếm và lịch sử ngáp giữa video.
+
+        Parameters: Không có.
+        Returns: Không có.
+        Raises: Không có.
+        """
         self.open_start_time = None
-
-        # Tổng số lần ngáp ghi nhận được
         self.yawn_count = 0
-
-        # Cờ đánh dấu sự kiện ngáp đã được tính cho chu kỳ mở miệng hiện tại chưa
         self.counted_current_yawn = False
-
-        # Hàng đợi lưu vết các mốc thời gian xảy ra sự kiện ngáp trong phạm vi time_window
         self.yawn_timestamps = deque()
+        self._open_frames = 0
+        self._last_timestamp = None
+        self._suspended_at = None
 
-    # Cập nhật trạng thái miệng theo từng frame.
-    def update(self, mouth_state, current_time=None):
-        # Sử dụng thời gian hiện tại của hệ thống nếu không truyền vào
-        if current_time is None:
-            current_time = time.time()
+    def suspend(self, timestamp):
+        """Đóng băng chu kỳ miệng ở mốc hợp lệ cuối.
 
-        # Chuẩn hóa thời gian về kiểu float
-        current_time = float(current_time)
+        Parameters: timestamp bắt đầu khoảng không quan sát.
+        Returns: Không có.
+        Raises: ValueError nếu thời gian sai.
+        """
+        timestamp = validate_timestamp(timestamp, self._last_timestamp)
+        if self._suspended_at is None:
+            self._suspended_at = timestamp
 
-        # Thời gian phải là số hữu hạn
-        if not math.isfinite(current_time):
-            raise ValueError("current_time must be a finite number")
+    def resume(self, timestamp):
+        """Bỏ thời gian gap khỏi timer nhưng giữ mốc ngáp gốc.
 
-        # Khởi tạo kết quả cho frame hiện tại
-        yawn_event = False
-        yawn_duration = 0.0
+        Parameters: timestamp quan sát trở lại.
+        Returns: Không có.
+        Raises: ValueError nếu thời gian lùi.
+        """
+        timestamp = validate_timestamp(timestamp, self._suspended_at)
+        if self._suspended_at is not None:
+            if self.open_start_time is not None:
+                self.open_start_time += timestamp - self._suspended_at
+            self._suspended_at = None
 
+    def window_count(self, timestamp):
+        """Loại sự kiện cũ; giữ biên timestamp - event == time_window.
+
+        Parameters: timestamp của video gốc.
+        Returns: int, số lần ngáp trong cửa sổ, không phải rate mỗi giây.
+        Raises: ValueError nếu thời gian sai.
+        """
+        timestamp = validate_timestamp(timestamp, self._last_timestamp)
+        while self.yawn_timestamps and (
+            timestamp - self.yawn_timestamps[0] > self.time_window
+        ):
+            self.yawn_timestamps.popleft()
+        return len(self.yawn_timestamps)
+
+    def update_typed(self, mouth_state, current_time, *, confirm=True):
+        """Cập nhật ngáp; không phát lại sự kiện trong cùng chu kỳ.
+
+        Parameters: mouth_state, current_time; confirm bảo vệ frame đơn.
+        Returns: YawningResult.
+        Raises: ValueError nếu trạng thái/thời gian sai hoặc chưa resume.
+        """
+        if mouth_state not in ("MOUTH_OPEN", "MOUTH_CLOSED", "UNKNOWN"):
+            raise ValueError("Invalid mouth_state")
+        current_time = validate_timestamp(current_time, self._last_timestamp)
+        if self._suspended_at is not None:
+            raise ValueError("Resume tracker before updating")
+        event = False
+        duration = 0.0
         if mouth_state == "MOUTH_OPEN":
-            # Bắt đầu ghi nhận thời điểm mở miệng nếu đây là frame MOUTH_OPEN đầu tiên
             if self.open_start_time is None:
                 self.open_start_time = current_time
                 self.counted_current_yawn = False
-
-            # Tính thời gian mở miệng liên tục
-            yawn_duration = current_time - self.open_start_time
-
-            # Xác định sự kiện ngáp khi thời gian đạt hoặc vượt ngưỡng và chưa được đếm trước đó trong chu kỳ này
+            self._open_frames += 1
+            duration = current_time - self.open_start_time
+            corroborated = not confirm or (
+                self._open_frames > 1 and duration > 0
+            )
             if (
-                yawn_duration >= self.yawn_duration_threshold
+                duration >= self.yawn_duration_threshold
+                and corroborated
                 and not self.counted_current_yawn
             ):
-                yawn_event = True
+                event = True
                 self.yawn_count += 1
                 self.yawn_timestamps.append(current_time)
                 self.counted_current_yawn = True
-
-        elif mouth_state == "MOUTH_CLOSED":
-            # Nếu trước đó miệng đang mở, kết thúc chu kỳ mở miệng hiện tại
-            if self.open_start_time is not None:
-                yawn_duration = current_time - self.open_start_time
-
-            # Reset trạng thái sau khi miệng khép lại
-            self.open_start_time = None
-            self.counted_current_yawn = False
-            yawn_duration = 0.0
-
-        elif mouth_state == "UNKNOWN":
-            # Trạng thái UNKNOWN làm gián đoạn chuỗi theo dõi ngáp
-            self.open_start_time = None
-            self.counted_current_yawn = False
-            yawn_duration = 0.0
-
         else:
-            # Từ chối trạng thái miệng không hợp lệ
-            raise ValueError(
-                "mouth_state must be 'MOUTH_OPEN', 'MOUTH_CLOSED', or 'UNKNOWN'"
-            )
+            self.open_start_time = None
+            self.counted_current_yawn = False
+            self._open_frames = 0
+        frequency = self.window_count(current_time)
+        self._last_timestamp = current_time
+        return YawningResult(event, duration, self.yawn_count, frequency)
 
-        # Dọn dẹp các mốc thời gian ngáp cũ nằm ngoài khoảng thời gian trượt (time_window)
-        while self.yawn_timestamps and (
-            current_time - self.yawn_timestamps[0] > self.time_window
-        ):
-            self.yawn_timestamps.popleft()
+    def update(self, mouth_state, current_time=None):
+        """Wrapper dictionary tương thích caller cũ.
 
-        # Tính tần suất ngáp hiện tại trong cửa sổ thời gian
-        yawn_frequency = len(self.yawn_timestamps)
-
-        # Trả về kết quả theo dõi của frame hiện tại
-        return {
-            "yawn_event": yawn_event,
-            "yawn_duration": yawn_duration,
-            "yawn_count": self.yawn_count,
-            "yawn_frequency": yawn_frequency,
-        }
+        Parameters: mouth_state và current_time hoặc đồng hồ hệ thống.
+        Returns: Dictionary legacy; coordinator dùng update_typed.
+        Raises: ValueError nếu trạng thái/thời gian sai.
+        """
+        if current_time is None:
+            current_time = time.time()
+        return asdict(
+            self.update_typed(mouth_state, current_time, confirm=False)
+        )

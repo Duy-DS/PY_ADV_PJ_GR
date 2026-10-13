@@ -1,203 +1,134 @@
-"""Script tích hợp Detection và Temporal Tolerance có giao diện UI (Task T1001 & T0703)."""
+"""Demo phát hiện khuôn mặt và hành vi typed T0704, không kết luận buồn ngủ."""
 
-import cv2
 import sys
 import tkinter as tk
-from tkinter import filedialog
+from contextlib import ExitStack
 from pathlib import Path
+from tkinter import filedialog
+
+import cv2
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.acquisition.camera import CameraStream
-from src.acquisition.video_reader import VideoReader
-from src.detection.face_detector import FaceDetector
-from src.detection.landmark_detector import LandmarkDetector
-
-from src.temporal.temporal_analyzer import TemporalAnalyzer
+from src.acquisition.camera import CameraStream  # noqa: E402
+from src.acquisition.video_reader import VideoReader  # noqa: E402
+from src.detection.face_detector import FaceDetector  # noqa: E402
+from src.detection.landmark_detector import LandmarkDetector  # noqa: E402
+from src.features.measurement_adapter import (  # noqa: E402
+    measure_eye,
+    measure_mouth,
+)
+from src.temporal.temporal_analyzer import TemporalAnalyzer  # noqa: E402
+from src.utils.contracts import unknown_eye, unknown_mouth  # noqa: E402
 
 
 def run_pipeline(use_camera: bool, video_path: str = ""):
-    """Chạy pipeline xử lý trên nguồn dữ liệu được chọn."""
-    print("[INFO] Đang khởi tạo mô hình AI và Temporal Analyzer...")
-    face_detector = FaceDetector()
-    landmark_detector = LandmarkDetector()
+    """Chạy demo, cleanup ngay cả khi khởi tạo thất bại hoặc EOF.
 
-    temporal_analyzer = TemporalAnalyzer(missing_frame_timeout=15)
-
-    try:
-        if use_camera:
-            print("[INFO] Đang kết nối Webcam...")
-            stream = CameraStream(device_id=0)
-        else:
-            print(f"[INFO] Đang mở video: {video_path}")
-            stream = VideoReader(video_path)
-    except Exception as e:
-        print(f"[ERROR] Không thể mở dữ liệu đầu vào: {e}")
-        return
-
-    print("[INFO] Bấm phím 'q' hoặc 'ESC' trên cửa sổ video để thoát.")
-
-    with stream as source:
-        for frame_id, timestamp, frame in source:
-            face_result = face_detector.process(frame)
-            face_detected = face_result.get("face_detected", False)
-
-            current_features = None
-
-            if face_detected:
-                x, y, w, h = face_result["bbox"]
-                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-
-                lm_result = landmark_detector.process(frame)
-                if lm_result.get("landmark_valid", False):
-                    current_features = {
-                        "eye_state": "TRACKING",
-                        "mouth_state": "TRACKING",
-                    }
-                    for pt in lm_result["left_eye_points"]:
-                        cv2.circle(frame, pt, 2, (0, 0, 255), -1)
-                    for pt in lm_result["right_eye_points"]:
-                        cv2.circle(frame, pt, 2, (255, 0, 0), -1)
-                    for pt in lm_result["mouth_points"]:
-                        cv2.circle(frame, pt, 2, (0, 255, 255), -1)
-
-            temporal_result = temporal_analyzer.process_tolerance(
-                face_detected, current_features
+    Parameters: use_camera chọn camera; video_path là tệp video.
+    Returns: Không có.
+    Raises: OSError, ValueError hoặc lỗi detector; cleanup luôn được gọi.
+    """
+    with ExitStack() as cleanup:
+        cleanup.callback(cv2.destroyAllWindows)
+        analyzer = TemporalAnalyzer()
+        cleanup.callback(analyzer.reset)
+        detector = FaceDetector(
+            model_path=str(
+                REPO_ROOT / "models/pretrained/blaze_face_short_range.tflite"
             )
-            action = temporal_result["action"]
-            missing_count = temporal_analyzer.consecutive_missing_frames
-
+        )
+        cleanup.callback(detector.release)
+        landmarks = LandmarkDetector(
+            model_path=str(
+                REPO_ROOT / "models/pretrained/face_landmarker.task"
+            )
+        )
+        cleanup.callback(landmarks.release)
+        stream = (
+            CameraStream(device_id=0)
+            if use_camera
+            else VideoReader(video_path)
+        )
+        source = cleanup.enter_context(stream)
+        for frame_id, timestamp, image in source:
+            detection = detector.process(image)
+            face = bool(detection.get("face_detected", False))
+            eye, mouth = unknown_eye(), unknown_mouth()
+            if face:
+                mesh = landmarks.process(image)
+                if mesh.get("landmark_valid", False):
+                    eye = measure_eye(
+                        mesh["left_eye_points"],
+                        mesh["right_eye_points"],
+                        analyzer.settings,
+                    )
+                    mouth = measure_mouth(
+                        mesh["mouth_points"], analyzer.settings
+                    )
+            result = analyzer.update(face, timestamp, eye, mouth)
+            text = (
+                f"Frame {frame_id} | {timestamp:.2f}s | {result.action} | "
+                f"Eye {result.eye.eye_state} | "
+                f"Mouth {result.mouth.mouth_state}"
+            )
             cv2.putText(
-                frame,
-                f"Frame: {frame_id} | Time: {timestamp:.1f}s",
+                image,
+                text,
                 (20, 25),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.6,
                 (255, 255, 255),
                 2,
             )
-
-            if action == "CONTINUE":
-                cv2.putText(
-                    frame,
-                    "Status: NORMAL (Face Detected)",
-                    (20, 55),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.6,
-                    (0, 255, 0),
-                    2,
-                )
-
-            elif action == "HOLD":
-                cv2.putText(
-                    frame,
-                    f"Status: HOLD (Missing {missing_count}/{temporal_analyzer.missing_frame_timeout} frames)",
-                    (20, 55),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.6,
-                    (0, 255, 255),
-                    2,
-                )
-                cv2.putText(
-                    frame,
-                    "Waiting for face...",
-                    (20, 85),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.6,
-                    (0, 255, 255),
-                    2,
-                )
-
-            elif action == "RESET":
-                cv2.putText(
-                    frame,
-                    f"Status: RESET (Lost face > {temporal_analyzer.missing_frame_timeout} frames)",
-                    (20, 55),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.6,
-                    (0, 0, 255),
-                    2,
-                )
-                cv2.putText(
-                    frame,
-                    "UNKNOWN - No Face",
-                    (20, 85),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.7,
-                    (0, 0, 255),
-                    2,
-                )
-
-            cv2.imshow("Driver Drowsiness - Pipeline Test", frame)
-
-            # Tính toán thời gian delay
+            cv2.imshow("Temporal behavior T0704", image)
             fps = getattr(stream, "fps", 30)
-            if fps <= 0:
-                fps = 30
-            delay = 1 if use_camera else max(1, int(1000 / fps))
-
-            key = cv2.waitKey(delay) & 0xFF
-            if key in [ord("q"), 27]:
+            delay = 1 if use_camera else max(1, int(1000 / max(fps, 1)))
+            if cv2.waitKey(delay) & 0xFF in (ord("q"), 27):
                 break
-
-    face_detector.release()
-    landmark_detector.release()
-    cv2.destroyAllWindows()
-    print("[INFO] Đã đóng pipeline an toàn.")
 
 
 def show_gui():
-    """Hiển thị giao diện nút bấm để chọn đầu vào."""
-    root = tk.Tk()
-    root.title("Chọn Nguồn Dữ Liệu")
+    """Hiển thị lựa chọn webcam/video.
 
-    window_width, window_height = 320, 160
-    screen_width = root.winfo_screenwidth()
-    screen_height = root.winfo_screenheight()
-    x_cordinate = int((screen_width / 2) - (window_width / 2))
-    y_cordinate = int((screen_height / 2) - (window_height / 2))
-    root.geometry(f"{window_width}x{window_height}+{x_cordinate}+{y_cordinate}")
+    Parameters: Không có.
+    Returns: Không có.
+    Raises: tkinter.TclError nếu môi trường không hỗ trợ GUI.
+    """
+    root = tk.Tk()
+    root.title("Temporal behavior T0704")
+    root.geometry("360x160")
 
     def on_webcam_click():
+        """Đóng GUI và chạy camera.
+
+        Parameters: Không có.
+        Returns: Không có.
+        Raises: Lỗi pipeline được truyền cho caller.
+        """
         root.destroy()
-        run_pipeline(use_camera=True)
+        run_pipeline(True)
 
     def on_video_click():
-        file_path = filedialog.askopenfilename(
-            title="Chọn file Video",
-            initialdir=str(REPO_ROOT / "data" / "raw" / "d3s"),
-            filetypes=[("Video Files", "*.mp4 *.avi *.mkv *.mov")],
+        """Chọn tệp và chạy video.
+
+        Parameters: Không có.
+        Returns: Không có.
+        Raises: Lỗi pipeline được truyền cho caller.
+        """
+        path = filedialog.askopenfilename(
+            title="Chọn video",
+            initialdir=str(REPO_ROOT / "data/raw/d3s"),
+            filetypes=[("Video", "*.mp4 *.avi *.mkv *.mov")],
         )
-        if file_path:
+        if path:
             root.destroy()
-            run_pipeline(use_camera=False, video_path=file_path)
+            run_pipeline(False, path)
 
-    tk.Label(
-        root, text="Vui lòng chọn nguồn dữ liệu:", font=("Arial", 11, "bold")
-    ).pack(pady=15)
-
-    tk.Button(
-        root,
-        text="Sử dụng Webcam",
-        font=("Arial", 10),
-        bg="#2ecc71",
-        fg="white",
-        width=25,
-        command=on_webcam_click,
-    ).pack(pady=5)
-
-    tk.Button(
-        root,
-        text="Chọn Video từ máy tính",
-        font=("Arial", 10),
-        bg="#3498db",
-        fg="white",
-        width=25,
-        command=on_video_click,
-    ).pack(pady=5)
-
+    tk.Button(root, text="Webcam", command=on_webcam_click).pack(pady=15)
+    tk.Button(root, text="Chọn video", command=on_video_click).pack(pady=5)
     root.mainloop()
 
 

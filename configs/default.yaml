@@ -13,3 +13,5 @@ alert:
 temporal:
   missing_face_tolerance_frames: 5  # Số frame cho phép mất mặt tạm thời (Hold state)
   missing_face_timeout_sec: 1.5      # Thời gian timeout để reset trạng thái (giây)
+drowsiness:
+  mode: "eye_yawn"  # Lựa chọn chế độ: "eye_only" (Mode A) hoặc "eye_yawn" (Mode B)

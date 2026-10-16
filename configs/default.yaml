@@ -10,6 +10,7 @@ mouth:
   yawn_frequency_threshold: 3.0 # Số lần ngáp/phút (drowsy)
 alert:
   cooldown: 3.0
+  sound_enabled: true
 temporal:
   missing_face_tolerance_frames: 5  # Số frame cho phép mất mặt tạm thời (Hold state)
   missing_face_timeout_sec: 1.5      # Thời gian timeout để reset trạng thái (giây)

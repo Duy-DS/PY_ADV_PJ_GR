@@ -10,8 +10,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.visualization.overlay import HUDVisualizer
-from src.utils.contracts import (
+from src.visualization.overlay import HUDVisualizer  # noqa: E402
+from src.utils.contracts import (  # noqa: E402
     EyeMeasurement,
     MouthMeasurement,
     TemporalBehaviorState,
@@ -19,7 +19,7 @@ from src.utils.contracts import (
 )
 
 
-def test_hud_visualization():
+def test_hud_visualization(visual=False):
     # 1. Tạo một khung hình giả (ảnh đen 640x480)
     frame = np.zeros((480, 640, 3), dtype=np.uint8)
 
@@ -38,9 +38,15 @@ def test_hud_visualization():
 
     # Tạo dữ liệu TemporalAnalysisResult theo đúng hợp đồng (contracts.py)
     eye = EyeMeasurement(
-        left_ear=0.25, right_ear=0.25, avg_ear=0.25, eye_state="OPEN", is_valid=True
+        left_ear=0.25,
+        right_ear=0.25,
+        avg_ear=0.25,
+        eye_state="OPEN",
+        is_valid=True,
     )
-    mouth = MouthMeasurement(mar=0.15, mouth_state="MOUTH_CLOSED", is_valid=True)
+    mouth = MouthMeasurement(
+        mar=0.15, mouth_state="MOUTH_CLOSED", is_valid=True
+    )
     behavior = TemporalBehaviorState(
         eye_closed_duration=0.5, is_prolonged_closure=False
     )
@@ -75,14 +81,16 @@ def test_hud_visualization():
             landmarks=landmarks,
         )
 
-        cv2.imshow("HUD Test", test_frame)
-        print(title)
+        assert test_frame.shape == frame.shape
+        assert np.any(test_frame != frame)
+        if visual:
+            cv2.imshow("HUD Test", test_frame)
+            print(title)
+            cv2.waitKey(0)
 
-        # Chờ người dùng ấn phím bất kỳ để chuyển sang trạng thái test tiếp theo
-        cv2.waitKey(0)
-
-    cv2.destroyAllWindows()
+    if visual:
+        cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
-    test_hud_visualization()
+    test_hud_visualization(visual=True)

@@ -85,9 +85,7 @@ class AlertManager:
 
         # Kiểm tra tính hợp lệ và chuẩn hóa trạng thái
         if not isinstance(state, str):
-            raise ValueError(
-                f"Invalid drowsiness decision state: {state!r}"
-            )
+            raise ValueError(f"Invalid drowsiness decision state: {state!r}")
         if state == "NORMAL":
             state = "NON_DROWSY"
         if state not in {"DROWSY", "NON_DROWSY", "UNKNOWN"}:

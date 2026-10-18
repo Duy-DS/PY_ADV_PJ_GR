@@ -3,6 +3,7 @@ import math
 from src.utils.geometry import euclidean_distance_2d
 from src.utils.config import load_config
 
+
 # Tính Eye Aspect Ratio (EAR) cho một mắt
 def calculate_ear(eye_landmarks):
     if len(eye_landmarks) != 6:
@@ -73,7 +74,10 @@ def calculate_eye_state(left_eye_points, right_eye_points):
             return {"ear": 0.0, "eye_state": "UNKNOWN"}
 
         # Khoảng cách ngang bằng 0 sẽ làm công thức EAR bị chia cho 0
-        if euclidean_distance_2d(normalized_points[0], normalized_points[3]) == 0:
+        if (
+            euclidean_distance_2d(normalized_points[0], normalized_points[3])
+            == 0
+        ):
             return {"ear": 0.0, "eye_state": "UNKNOWN"}
 
         normalized_eyes.append(normalized_points)
@@ -88,13 +92,12 @@ def calculate_eye_state(left_eye_points, right_eye_points):
     # Phân loại trạng thái mắt dựa trên ngưỡng EAR
     eye_state = classify_eye_state(average_ear, ear_threshold)
 
-    return {
-        "ear": float(average_ear),
-        "eye_state": eye_state
-    }
+    return {"ear": float(average_ear), "eye_state": eye_state}
+
 
 class EyeFeatureExtractor:
     def __init__(self, ear_threshold=None):
         self.ear_threshold = ear_threshold
+
     def compute(self, left_pts, right_pts):
         return calculate_eye_state(left_pts, right_pts)

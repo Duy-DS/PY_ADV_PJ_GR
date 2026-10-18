@@ -1,4 +1,6 @@
-"""Module trích xuất mốc hình học khuôn mặt (MediaPipe Tasks API) (Task T0402)."""
+"""
+Module trích xuất mốc hình học khuôn mặt (MediaPipe Tasks API) (Task T0402).
+"""
 
 import cv2
 import mediapipe as mp
@@ -32,7 +34,9 @@ class LandmarkDetector:
         """Trích xuất tọa độ điểm mốc mắt và môi."""
         try:
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
+            mp_image = mp.Image(
+                image_format=mp.ImageFormat.SRGB, data=rgb_frame
+            )
             results = self.landmarker.detect(mp_image)
 
             # Đảm bảo có landmarks (FReq031)
@@ -42,7 +46,9 @@ class LandmarkDetector:
             landmarks = results.face_landmarks[0]
             ih, iw, _ = frame.shape
 
-            def extract_pixel_coords(indices: List[int]) -> List[Tuple[int, int]]:
+            def extract_pixel_coords(
+                indices: List[int],
+            ) -> List[Tuple[int, int]]:
                 return [
                     (int(landmarks[i].x * iw), int(landmarks[i].y * ih))
                     for i in indices
@@ -51,7 +57,9 @@ class LandmarkDetector:
             return {
                 "landmark_valid": True,
                 "left_eye_points": extract_pixel_coords(self.LEFT_EYE_INDICES),
-                "right_eye_points": extract_pixel_coords(self.RIGHT_EYE_INDICES),
+                "right_eye_points": extract_pixel_coords(
+                    self.RIGHT_EYE_INDICES
+                ),
                 "mouth_points": extract_pixel_coords(self.MOUTH_INDICES),
             }
 
@@ -71,14 +79,14 @@ class LandmarkDetector:
 
     def extract_landmarks(self, frame):
         res = self.process(frame)
-        valid = bool(res.get('landmark_valid', False))
+        valid = bool(res.get("landmark_valid", False))
         return {
-            'face_detected': valid,
-            'landmark_valid': valid,
-            'left_eye_landmarks': res.get('left_eye_points'),
-            'right_eye_landmarks': res.get('right_eye_points'),
-            'mouth_landmarks': res.get('mouth_points'),
-            'left_eye_points': res.get('left_eye_points'),
-            'right_eye_points': res.get('right_eye_points'),
-            'mouth_points': res.get('mouth_points'),
+            "face_detected": valid,
+            "landmark_valid": valid,
+            "left_eye_landmarks": res.get("left_eye_points"),
+            "right_eye_landmarks": res.get("right_eye_points"),
+            "mouth_landmarks": res.get("mouth_points"),
+            "left_eye_points": res.get("left_eye_points"),
+            "right_eye_points": res.get("right_eye_points"),
+            "mouth_points": res.get("mouth_points"),
         }

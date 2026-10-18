@@ -334,7 +334,8 @@ def report_performance(
 ) -> PerformanceReport:
     """Mô tả: tổng kết SCri014, kể cả khi hết nguồn/ngắt/lỗi.
 
-    Tham số (Parameters): latencies ms từng frame; elapsed giây; unknown số lỗi.
+    Tham số (Parameters): latencies ms từng frame; elapsed giây; unknown số
+    lỗi.
     Giá trị trả về (Returns): thống kê; không dữ liệu -> chưa đạt.
     Ngoại lệ (Raises): không với số đo hợp lệ từ runner.
     """
@@ -362,7 +363,8 @@ def run_interactive_pipeline(
 ) -> PerformanceReport:
     """Mô tả: chạy video hoặc camera, cleanup cả khi lỗi/ngắt/EOF.
 
-    Tham số (Parameters): nguồn repo-relative/absolute hoặc ID camera; giới hạn;
+    Tham số (Parameters): nguồn repo-relative/absolute hoặc ID camera; giới
+    hạn;
         visual bật GUI. Headless không gọi bất kỳ hàm cửa sổ OpenCV nào.
     Giá trị trả về (Returns): số đo latency/FPS và số frame UNKNOWN.
     Ngoại lệ (Raises): lỗi nguồn, xử lý, GUI được truyền sau teardown/report.
@@ -783,7 +785,8 @@ def test_headless_runner_eof_and_frame_limit(
 ) -> None:
     """Mô tả: acquisition thật, EOF/giới hạn và tuyệt đối không gọi GUI.
 
-    Tham số (Parameters): patch; pipeline; video tạm; số frame giới hạn/kỳ vọng.
+    Tham số (Parameters): patch; pipeline; video tạm; số frame giới hạn/kỳ
+    vọng.
     Giá trị trả về (Returns): None nếu capture/detector đóng đúng.
     Ngoại lệ (Raises): AssertionError nếu GUI bị gọi hoặc tài nguyên còn mở.
     """

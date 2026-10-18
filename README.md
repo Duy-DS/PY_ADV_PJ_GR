@@ -240,13 +240,20 @@ pip install -r requirements.txt
 ### 4. Chạy offline pipeline trên video
 
 ```bash
-python src/main.py --source data/raw/d3s/sample.mp4 --mode eye_yawn
+# Chế độ A (eye_only — Chỉ xét dấu hiệu Mắt nhắm kéo dài):
+python src/main.py --source data/raw/d3s/d3s_video_dataset.mp4 --mode eye_only --config configs/default.yaml
+```
+
+
+```bash
+# Chế độ B (eye_yawn — Kết hợp cả Mắt nhắm kéo dài + Ngáp):
+python src/main.py --source data/raw/d3s/d3s_video_dataset.mp4 --mode eye_yawn --config configs/default.yaml
 ```
 
 ### 5. Chạy realtime webcam
 
 ```bash
-python src/main.py --source webcam
+python src/main.py --source webcam --mode eye_yawn --config configs/default.yaml
 ```
 
 ### 6. Chạy thực nghiệm đánh giá

@@ -1,5 +1,6 @@
 """
-Module hiển thị giao diện HUD và lớp phủ trực quan hóa thời gian thực (Task T0902).
+Module hiển thị giao diện HUD và lớp phủ trực quan hóa thời gian thực (Task
+T0902).
 File: src/visualization/overlay.py
 """
 
@@ -10,7 +11,9 @@ from src.utils.contracts import TemporalAnalysisResult
 
 
 class HUDVisualizer:
-    """Lớp tiện ích để vẽ HUD và các lớp phủ trực quan lên khung hình camera."""
+    """
+    Lớp tiện ích để vẽ HUD và các lớp phủ trực quan lên khung hình camera.
+    """
 
     def __init__(self):
         # Định nghĩa bảng màu (BGR)
@@ -43,7 +46,9 @@ class HUDVisualizer:
             cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
 
     def draw_landmarks(
-        self, frame: np.ndarray, landmarks: Optional[Dict[str, List[Tuple[int, int]]]]
+        self,
+        frame: np.ndarray,
+        landmarks: Optional[Dict[str, List[Tuple[int, int]]]],
     ):
         """Vẽ các điểm mốc (landmarks) của mắt trái, mắt phải và miệng."""
         if not landmarks:
@@ -51,9 +56,13 @@ class HUDVisualizer:
 
         # Vẽ mắt bằng màu Xanh lá
         for pt in landmarks.get("left_eye_points", []):
-            cv2.circle(frame, (int(pt[0]), int(pt[1])), 2, self.COLOR_GREEN, -1)
+            cv2.circle(
+                frame, (int(pt[0]), int(pt[1])), 2, self.COLOR_GREEN, -1
+            )
         for pt in landmarks.get("right_eye_points", []):
-            cv2.circle(frame, (int(pt[0]), int(pt[1])), 2, self.COLOR_GREEN, -1)
+            cv2.circle(
+                frame, (int(pt[0]), int(pt[1])), 2, self.COLOR_GREEN, -1
+            )
 
         # Vẽ miệng bằng màu Vàng hoặc Xanh dương để dễ phân biệt
         for pt in landmarks.get("mouth_points", []):
@@ -70,8 +79,10 @@ class HUDVisualizer:
         landmarks: Optional[Dict[str, List[Tuple[int, int]]]] = None,
     ) -> np.ndarray:
         """
-        Vẽ toàn bộ HUD lên khung hình bao gồm thông số kỹ thuật, số liệu EAR/MAR và Banner trạng thái.
-        Không làm suy giảm FPS nhờ sử dụng các hàm vẽ cơ sở được tối ưu của OpenCV.
+        Vẽ toàn bộ HUD lên khung hình bao gồm thông số kỹ thuật, số liệu
+        EAR/MAR và Banner trạng thái.
+        Không làm suy giảm FPS nhờ sử dụng các hàm vẽ cơ sở được tối ưu của
+        OpenCV.
         """
         # 1. Xác định màu chủ đạo dựa trên quyết định/trạng thái hiện tại
         status_color = self._get_status_color(decision_state)
@@ -149,7 +160,9 @@ class HUDVisualizer:
 
         # Căn giữa chữ cảnh báo
         banner_text = f"STATE: {decision_state}"
-        text_size = cv2.getTextSize(banner_text, cv2.FONT_HERSHEY_DUPLEX, 1.0, 2)[0]
+        text_size = cv2.getTextSize(
+            banner_text, cv2.FONT_HERSHEY_DUPLEX, 1.0, 2
+        )[0]
         text_x = (frame.shape[1] - text_size[0]) // 2
         text_y = frame.shape[0] - 15
 

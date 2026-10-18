@@ -1,5 +1,6 @@
 import math
 
+
 # Tính khoảng cách Euclidean giữa hai điểm trong không gian 2D
 def euclidean_distance_2d(point1, point2):
     x1, y1 = point1

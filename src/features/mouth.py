@@ -9,7 +9,8 @@ def calculate_mar(mouth_landmarks):
     Tính Mouth Aspect Ratio (MAR) cho vùng miệng.
     Yêu cầu mouth_landmarks chứa đúng 8 điểm theo thứ tự chuẩn:
     - p1 (mép trái), p5 (mép phải) -> xác định chiều ngang
-    - (p2, p8), (p3, p7), (p4, p6) -> 3 cặp điểm môi trên/môi dưới xác định chiều dọc
+    - (p2, p8), (p3, p7), (p4, p6) -> 3 cặp điểm môi trên/môi dưới xác định
+    chiều dọc
     """
     if len(mouth_landmarks) != 8:
         raise ValueError("mouth_landmarks must contain exactly 8 points")
@@ -53,7 +54,8 @@ def calculate_mouth_state(mouth_points, landmark_valid=True):
     if not landmark_valid or mouth_points is None:
         return {"mar": 0.0, "mouth_state": "UNKNOWN"}
 
-    # Đọc ngưỡng MAR trực tiếp từ tệp cấu hình YAML (key: mouth -> mar_threshold)
+    # Đọc ngưỡng MAR trực tiếp từ tệp cấu hình YAML (key: mouth ->
+    # mar_threshold)
     config = load_config()
     try:
         mar_threshold = float(config["mouth"]["mar_threshold"])
@@ -93,13 +95,12 @@ def calculate_mouth_state(mouth_points, landmark_valid=True):
     # Phân loại trạng thái MOUTH_OPEN / MOUTH_CLOSED / UNKNOWN
     mouth_state = classify_mouth_state(mar, mar_threshold)
 
-    return {
-        "mar": float(mar),
-        "mouth_state": mouth_state
-    }
+    return {"mar": float(mar), "mouth_state": mouth_state}
+
 
 class MouthFeatureExtractor:
     def __init__(self, mar_threshold=None):
         self.mar_threshold = mar_threshold
+
     def compute(self, mouth_pts, landmark_valid=True):
         return calculate_mouth_state(mouth_pts, landmark_valid=landmark_valid)

@@ -17,7 +17,8 @@ class FaceDetector:
         """Khởi tạo FaceDetector với Tasks API."""
         base_options = python.BaseOptions(model_asset_path=model_path)
         options = vision.FaceDetectorOptions(
-            base_options=base_options, min_detection_confidence=min_detection_confidence
+            base_options=base_options,
+            min_detection_confidence=min_detection_confidence,
         )
         self.detector = vision.FaceDetector.create_from_options(options)
 

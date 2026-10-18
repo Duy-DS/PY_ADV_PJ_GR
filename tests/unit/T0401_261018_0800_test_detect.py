@@ -5,14 +5,16 @@ import sys
 from pathlib import Path
 
 # Đảm bảo import đúng đường dẫn từ thư mục gốc
-REPO_ROOT = Path(__file__).resolve().parents[2]  # Điều chỉnh số 2 tùy vị trí đặt file
+REPO_ROOT = (
+    Path(__file__).resolve().parents[2]
+)  # Điều chỉnh số 2 tùy vị trí đặt file
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.acquisition.camera import CameraStream
-from src.acquisition.video_reader import VideoReader
-from src.detection.face_detector import FaceDetector
-from src.detection.landmark_detector import LandmarkDetector
+from src.acquisition.camera import CameraStream  # noqa: E402
+from src.acquisition.video_reader import VideoReader  # noqa: E402
+from src.detection.face_detector import FaceDetector  # noqa: E402
+from src.detection.landmark_detector import LandmarkDetector  # noqa: E402
 
 
 def run_demo(use_camera: bool = True, video_path: str = ""):
@@ -22,7 +24,11 @@ def run_demo(use_camera: bool = True, video_path: str = ""):
 
     # 2. Khởi tạo nguồn Input (Webcam hoặc Video file)
     try:
-        stream = CameraStream(device_id=0) if use_camera else VideoReader(video_path)
+        stream = (
+            CameraStream(device_id=0)
+            if use_camera
+            else VideoReader(video_path)
+        )
     except Exception as e:
         print(f"[ERROR] Không thể mở input: {e}")
         return
@@ -80,7 +86,11 @@ def run_demo(use_camera: bool = True, video_path: str = ""):
             cv2.imshow("Driver Drowsiness - Detection PoC", frame)
 
             # Delay phù hợp để xem video, 1ms cho camera
-            delay = 1 if use_camera else max(1, int(1000 / getattr(stream, "fps", 30)))
+            delay = (
+                1
+                if use_camera
+                else max(1, int(1000 / getattr(stream, "fps", 30)))
+            )
             key = cv2.waitKey(delay) & 0xFF
             if key in [ord("q"), 27]:
                 break
@@ -97,4 +107,5 @@ if __name__ == "__main__":
     run_demo(use_camera=True)
 
     # Để test video từ D3S Dataset, comment dòng trên và uncomment dòng dưới:
-    # run_demo(use_camera=False, video_path="data/raw/d3s/d3s_video_dataset.mp4")
+    # run_demo(use_camera=False,
+    # video_path="data/raw/d3s/d3s_video_dataset.mp4")

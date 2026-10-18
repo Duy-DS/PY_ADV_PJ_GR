@@ -1,5 +1,6 @@
 import math
 
+
 def check_eye_closure_rule(temporal_data: dict) -> bool:
     """
     Luật A: Kiểm tra xem có xảy ra hiện tượng nhắm mắt kéo dài hay không.
@@ -9,13 +10,16 @@ def check_eye_closure_rule(temporal_data: dict) -> bool:
     return bool(temporal_data.get("prolonged_eye_closure", False))
 
 
-def check_yawning_rule(temporal_data: dict, yawn_frequency_threshold: float) -> bool:
+def check_yawning_rule(
+    temporal_data: dict, yawn_frequency_threshold: float
+) -> bool:
     """
-    Luật B: Kiểm tra xem tần suất ngáp có vượt ngưỡng cho phép trong cửa sổ thời gian hay không.
+    Luật B: Kiểm tra xem tần suất ngáp có vượt ngưỡng cho phép trong cửa sổ
+    thời gian hay không.
     """
     if not temporal_data:
         return False
-    
+
     yawn_frequency = temporal_data.get("yawn_frequency", 0)
     try:
         yawn_freq_val = float(yawn_frequency)
@@ -29,7 +33,9 @@ def check_yawning_rule(temporal_data: dict, yawn_frequency_threshold: float) -> 
     return yawn_freq_val >= threshold_val
 
 
-def evaluate_rules(temporal_data: dict, mode: str, yawn_frequency_threshold: float) -> tuple:
+def evaluate_rules(
+    temporal_data: dict, mode: str, yawn_frequency_threshold: float
+) -> tuple:
     """
     Hàm tổng hợp đánh giá luật dựa trên chế độ (Mode A hoặc Mode B).
     Trả về: (is_drowsy: bool, reasons: list)
@@ -49,6 +55,8 @@ def evaluate_rules(temporal_data: dict, mode: str, yawn_frequency_threshold: flo
     if mode == "eye_yawn":
         if check_yawning_rule(temporal_data, yawn_frequency_threshold):
             is_drowsy = True
-            reasons.append(f"High yawn frequency (>= {yawn_frequency_threshold})")
+            reasons.append(
+                f"High yawn frequency (>= {yawn_frequency_threshold})"
+            )
 
     return is_drowsy, reasons

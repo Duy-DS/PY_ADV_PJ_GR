@@ -61,6 +61,7 @@ def test_alert_cycle_normal_warning_cooldown_normal():
     assert manager.alarm.is_playing is False
     assert manager.cooldown_start_time is None
 
+
 # Kiểm tra trạng thái NORMAL được chấp nhận và chuẩn hóa
 def test_normal_string_is_accepted():
     manager = create_manager()
@@ -152,7 +153,9 @@ def test_negative_cooldown_is_invalid():
         create_manager(cooldown=-1.0)
 
 
-@pytest.mark.parametrize("cooldown", [float("nan"), float("inf"), float("-inf")])
+@pytest.mark.parametrize(
+    "cooldown", [float("nan"), float("inf"), float("-inf")]
+)
 def test_non_finite_cooldown_is_invalid(cooldown):
     with pytest.raises(ValueError):
         create_manager(cooldown=cooldown)
@@ -161,12 +164,14 @@ def test_non_finite_cooldown_is_invalid(cooldown):
 # Kiểm tra xử lý cấu hình âm thanh không đúng kiểu dữ liệu
 def test_invalid_sound_enabled_type():
     with pytest.raises(ValueError, match="sound_enabled"):
-        AlertManager({
-            "alert": {
-                "cooldown": 3.0,
-                "sound_enabled": "false",
+        AlertManager(
+            {
+                "alert": {
+                    "cooldown": 3.0,
+                    "sound_enabled": "false",
+                }
             }
-        })
+        )
 
 
 # Kiểm tra xử lý trạng thái đầu vào không hợp lệ hoặc bị thiếu

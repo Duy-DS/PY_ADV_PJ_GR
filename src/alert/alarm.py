@@ -1,4 +1,3 @@
-
 class Alarm:
     """Quan ly am thanh canh bao."""
 

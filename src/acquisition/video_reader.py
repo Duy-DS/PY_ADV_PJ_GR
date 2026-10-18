@@ -39,6 +39,7 @@ class VideoReader:
 
         self._capture = cv2.VideoCapture(str(self.video_path))
         if not self._capture.isOpened():
+            self._capture.release()
             raise ValueError(f"Unable to open video file: {self.video_path}")
 
         self.fps = float(self._capture.get(cv2.CAP_PROP_FPS))

@@ -1,9 +1,21 @@
-# Viết các thư viện cần thiết ở đây
+# Core Computer Vision & Pipeline Dependencies
+opencv-python>=4.10,<6
+mediapipe>=0.10,<2
+numpy>=2.0,<3
+pydantic>=2.0,<3
+pyyaml>=6.0,<7
 
-opencv-python
-mediapipe
-numpy
-pyyaml
-scikit-learn
-pandas
-matplotlib
+# Data Science & Feature Analysis
+scikit-learn>=1.5,<2
+pandas>=2.0,<4
+matplotlib>=3.8,<4
+scipy>=1.13,<2
+
+# T0202 Exploratory Notebook Environment
+jupyterlab>=4,<5
+ipykernel>=6,<8
+
+# Test and Code-Quality Dependencies
+pytest>=8.3,<10
+flake8>=7.1,<8
+black>=24.10,<27

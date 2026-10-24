@@ -1,0 +1,32 @@
+experiment_name: "D3S_Evaluation_Phase1"
+dataset_path: "data/raw/labels.csv"
+output_dir: "evaluation/results"
+
+modes:
+  - "eye_only"
+  - "eye_yawn"
+
+logging:
+  level: "INFO"
+  save_raw_predictions: true
+
+face_detection:
+  min_detection_confidence: 0.5
+
+eye:
+  ear_threshold: 0.22             # (Cũ 0.25): Giảm xuống để tránh báo động giả khi mắt hơi khép (Tăng Precision)
+  closure_time_threshold: 1.2     # (Cũ 1.5): Giảm thời gian chờ để bắt micro-sleep nhanh hơn (Tăng Recall)
+
+mouth:
+  mar_threshold: 0.55             # (Cũ 0.60): Nhạy hơn một chút khi tài xế bắt đầu ngáp
+  yawn_duration_threshold: 1.5    # (Cũ 2.0): Thời gian ngáp ngắn hơn để dễ dàng kích hoạt
+  yawn_frequency_window: 60.0   
+  yawn_frequency_threshold: 3.0 
+
+alert:
+  cooldown: 3.0
+  sound_enabled: false            # Tắt âm thanh cảnh báo khi chạy đánh giá offline hàng loạt
+
+temporal:
+  missing_face_tolerance_frames: 5  
+  missing_face_timeout_sec: 1.5

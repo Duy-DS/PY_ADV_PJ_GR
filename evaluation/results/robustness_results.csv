@@ -1,0 +1,5 @@
+Condition,Accuracy,Precision,Recall,F1_Score,Avg_Latency_ms
+Baseline_Lighting,0.7074,0.9239,0.5553,0.6937,19.97
+Low_Lighting,0.6437,0.8869,0.4553,0.6035,20.37
+Glasses_On,0.6861,0.9054,0.5275,0.6659,20.17
+Side_Angle_Face,0.6083,0.8315,0.4276,0.5688,20.97

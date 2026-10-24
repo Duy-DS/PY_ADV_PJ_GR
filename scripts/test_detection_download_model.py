@@ -40,17 +40,17 @@ def download_model(url: str, dest_path: Path):
 def main():
     # 1. Tạo thư mục models/pretrained nếu chưa tồn tại
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
-    print(f"[INFO] Đã chuẩn bị thư mục: {MODELS_DIR}")
+    print(f" Đã chuẩn bị thư mục: {MODELS_DIR}")
 
     # 2. Kiểm tra và tải từng model
     for filename, url in MODELS_URLS.items():
         dest_path = MODELS_DIR / filename
         if dest_path.exists():
-            print(f"\n[INFO] Model '{filename}' đã tồn tại. Bỏ qua tải.")
+            print(f"\n Model '{filename}' đã tồn tại. Bỏ qua tải.")
         else:
             download_model(url, dest_path)
 
-    print("\n[INFO] HOÀN TẤT CHUẨN BỊ MODEL!")
+    print("\n HOÀN TẤT CHUẨN BỊ MODEL!")
 
 
 if __name__ == "__main__":

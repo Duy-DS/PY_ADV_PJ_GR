@@ -1,4 +1,4 @@
-"""Live-camera acquisition utilities for the drowsiness pipeline."""
+"""Tiện ích thu thập dữ liệu từ camera trực tiếp cho luồng phát hiện buồn ngủ."""
 
 from __future__ import annotations
 
@@ -10,11 +10,11 @@ import numpy as np
 
 
 class CameraStream:
-    """Stream raw frames from an OpenCV camera device.
+    """Phát (stream) các khung hình thô từ một thiết bị camera OpenCV.
 
-    The stream yields only acquisition data: ``(frame_id, timestamp, frame)``.
-    Timestamps are elapsed seconds from stream start, derived from
-    ``time.perf_counter()`` so they remain monotonic.
+    Luồng này chỉ trả về dữ liệu thu thập: ``(frame_id, timestamp, frame)``.
+    Các mốc thời gian là số giây đã trôi qua kể từ khi luồng bắt đầu, được lấy từ
+    ``time.perf_counter()`` để đảm bảo chúng luôn tăng dần (monotonic).
     """
 
     def __init__(
@@ -23,15 +23,15 @@ class CameraStream:
         width: Optional[int] = None,
         height: Optional[int] = None,
     ) -> None:
-        """Open a camera device and optionally request a frame size.
+        """Mở một thiết bị camera và tùy ý yêu cầu một kích thước khung hình.
 
-        Args:
-            device_id: OpenCV camera device index.
-            width: Optional requested frame width in pixels.
-            height: Optional requested frame height in pixels.
+        Tham số:
+            device_id: Chỉ số thiết bị camera OpenCV.
+            width: Chiều rộng khung hình yêu cầu tùy chọn (tính bằng pixel).
+            height: Chiều cao khung hình yêu cầu tùy chọn (tính bằng pixel).
 
-        Raises:
-            ValueError: If OpenCV cannot open the requested camera device.
+        Ngoại lệ:
+            ValueError: Nếu OpenCV không thể mở thiết bị camera được yêu cầu.
         """
 
         self.device_id = device_id
@@ -46,10 +46,10 @@ class CameraStream:
 
         if not self._capture.isOpened():
             self.release()
-            raise ValueError(f"Unable to open camera device: {device_id}")
+            raise ValueError(f"Không thể mở thiết bị camera: {device_id}")
 
     def __enter__(self) -> "CameraStream":
-        """Return this stream while participating in a context manager."""
+        """Trả về luồng này khi tham gia vào một context manager (quản lý ngữ cảnh)."""
 
         return self
 
@@ -59,16 +59,18 @@ class CameraStream:
         exc_value: object,
         traceback: object,
     ) -> None:
-        """Release the underlying camera capture when leaving a context."""
+        """Giải phóng bộ thu hình (capture) camera nền tảng khi thoát khỏi context."""
 
         del exc_type, exc_value, traceback
         self.release()
 
     def __iter__(self) -> Iterator[tuple[int, float, np.ndarray]]:
-        """Yield camera frames until interruption or disconnection."""
+        """Trả về (yield) các khung hình camera cho đến khi bị gián đoạn hoặc ngắt kết nối."""
 
         if not self._capture.isOpened():
-            raise ValueError("Cannot iterate over a released camera capture.")
+            raise ValueError(
+                "Không thể lặp (iterate) qua một bộ thu hình camera đã bị giải phóng."
+            )
 
         frame_id = 0
         start_time = time.perf_counter()
@@ -85,7 +87,7 @@ class CameraStream:
             self.release()
 
     def release(self) -> None:
-        """Release the underlying OpenCV capture if it is still open."""
+        """Giải phóng bộ thu hình OpenCV nền tảng nếu nó vẫn đang mở."""
 
         if self._capture.isOpened():
             self._capture.release()

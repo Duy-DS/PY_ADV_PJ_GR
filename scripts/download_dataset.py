@@ -1,7 +1,7 @@
-"""Download, extract, and verify the D3S driver drowsiness dataset.
+"""Tải xuống, giải nén và xác minh tập dữ liệu buồn ngủ của tài xế D3S.
 
-The script preserves the folder layout provided by the dataset archive so that
-subject, session, and behavior/category boundaries remain intact.
+Kịch bản này giữ nguyên bố cục thư mục do kho lưu trữ dữ liệu cung cấp
+để các ranh giới về đối tượng, phiên và hành vi/phân loại được giữ nguyên vẹn.
 """
 
 from __future__ import annotations
@@ -29,8 +29,7 @@ LOGGER = logging.getLogger(__name__)
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_D3S_VIDEO_URL = (
-    "https://drive.google.com/file/d/"
-    "1r27hqFlvznT8f7FyV7ipUtfOJ2nio_LA/view?usp=sharing"
+    "https://drive.google.com/file/d/1r27hqFlvznT8f7FyV7ipUtfOJ2nio_LA/view?usp=sharing"
 )
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "data" / "raw" / "d3s"
 DEFAULT_ARCHIVE_NAME = "d3s_video_dataset.mp4"
@@ -50,26 +49,26 @@ VIDEO_EXTENSIONS = {".avi", ".m4v", ".mkv", ".mov", ".mp4"}
 
 
 class DatasetDownloadError(RuntimeError):
-    """Raised when the dataset cannot be downloaded."""
+    """Báo lỗi khi không thể tải tập dữ liệu."""
 
     def __init__(self, message: str, retryable: bool = True) -> None:
-        """Initialize a download failure and whether retrying may help."""
+        """Khởi tạo trạng thái lỗi tải xuống và cho biết có thể thử lại hay không."""
 
         super().__init__(message)
         self.retryable = retryable
 
 
 class DatasetExtractionError(RuntimeError):
-    """Raised when the dataset archive cannot be safely extracted."""
+    """Báo lỗi khi không thể giải nén an toàn kho lưu trữ tập dữ liệu."""
 
 
 class DatasetVerificationError(RuntimeError):
-    """Raised when extracted dataset videos cannot be read by OpenCV."""
+    """Báo lỗi khi OpenCV không thể đọc được các video dữ liệu đã giải nén."""
 
 
 @dataclass(frozen=True)
 class VideoVerification:
-    """OpenCV readability details for one dataset video."""
+    """Chi tiết khả năng đọc của OpenCV cho một video dữ liệu."""
 
     path: Path
     frame_count: int
@@ -80,7 +79,7 @@ class VideoVerification:
 
 @dataclass(frozen=True)
 class DatasetSummary:
-    """Summary of a prepared D3S dataset directory."""
+    """Bản tóm tắt về thư mục tập dữ liệu D3S đã được chuẩn bị."""
 
     output_dir: Path
     video_count: int
@@ -88,7 +87,7 @@ class DatasetSummary:
 
 
 class _GoogleDriveFormParser(HTMLParser):
-    """Collect fields from Google Drive's download confirmation form."""
+    """Thu thập các trường từ biểu mẫu xác nhận tải xuống của Google Drive."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -101,7 +100,7 @@ class _GoogleDriveFormParser(HTMLParser):
         tag: str,
         attrs: list[tuple[str, str | None]],
     ) -> None:
-        """Read the confirmation form action and hidden input fields."""
+        """Đọc action của biểu mẫu xác nhận và các trường nhập liệu ẩn."""
 
         attributes = dict(attrs)
         if tag == "form" and attributes.get("id") == "download-form":
@@ -118,73 +117,73 @@ class _GoogleDriveFormParser(HTMLParser):
             self.fields[name] = value
 
     def handle_endtag(self, tag: str) -> None:
-        """Stop collecting fields when the download form closes."""
+        """Dừng thu thập các trường khi biểu mẫu tải xuống đóng."""
 
         if tag == "form" and self._inside_download_form:
             self._inside_download_form = False
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
-    """Parse command-line options for the dataset preparation utility."""
+    """Phân tích các tùy chọn dòng lệnh cho công cụ chuẩn bị tập dữ liệu."""
 
     parser = argparse.ArgumentParser(
-        description="Download, extract, and verify D3S dataset videos."
+        description="Tải xuống, giải nén và xác minh video của tập dữ liệu D3S."
     )
     parser.add_argument(
         "--url",
         default=DEFAULT_D3S_VIDEO_URL,
-        help="Dataset archive URL. Defaults to the public D3S video link.",
+        help="URL của file nén tập dữ liệu. Mặc định là liên kết video D3S công khai.",
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
         default=DEFAULT_OUTPUT_DIR,
-        help="Directory where D3S videos should be extracted.",
+        help="Thư mục nơi các video D3S sẽ được giải nén.",
     )
     parser.add_argument(
         "--archive-path",
         type=Path,
         default=None,
-        help="Use a local archive or video file instead of downloading.",
+        help="Sử dụng file nén hoặc file video cục bộ thay vì tải xuống.",
     )
     parser.add_argument(
         "--archive-name",
         default=DEFAULT_ARCHIVE_NAME,
-        help="Filename used for the downloaded dataset archive.",
+        help="Tên file sử dụng cho file nén tập dữ liệu đã tải xuống.",
     )
     parser.add_argument(
         "--skip-download",
         action="store_true",
-        help="Only verify videos already present under --output-dir.",
+        help="Chỉ xác minh các video đã có sẵn trong --output-dir.",
     )
     parser.add_argument(
         "--overwrite",
         action="store_true",
-        help="Redownload or overwrite an existing local archive/video copy.",
+        help="Tải lại hoặc ghi đè lên bản sao file nén/video cục bộ đã có.",
     )
     parser.add_argument(
         "--retries",
         type=_positive_int,
         default=DEFAULT_DOWNLOAD_RETRIES,
-        help="Maximum download attempts after transient failures.",
+        help="Số lần thử tải xuống tối đa sau các lỗi tạm thời.",
     )
     parser.add_argument(
         "--timeout",
         type=_positive_float,
         default=DEFAULT_DOWNLOAD_TIMEOUT_SECONDS,
-        help="Network socket timeout in seconds for each request/read.",
+        help="Thời gian chờ (timeout) socket mạng tính bằng giây cho mỗi yêu cầu/đọc.",
     )
     parser.add_argument(
         "--min-videos",
         type=int,
         default=1,
-        help="Minimum number of readable videos required for success.",
+        help="Số lượng video có thể đọc tối thiểu cần thiết để báo thành công.",
     )
     parser.add_argument(
         "--log-level",
         default="INFO",
         choices=("DEBUG", "INFO", "WARNING", "ERROR"),
-        help="Console logging verbosity.",
+        help="Mức độ chi tiết của log trên console.",
     )
     return parser.parse_args(argv)
 
@@ -196,7 +195,7 @@ def download_file(
     retries: int = DEFAULT_DOWNLOAD_RETRIES,
     timeout: float = DEFAULT_DOWNLOAD_TIMEOUT_SECONDS,
 ) -> Path:
-    """Download a URL atomically with retries and integrity checks."""
+    """Tải xuống một URL một cách nguyên tử (atomic) với các lần thử lại và kiểm tra tính toàn vẹn."""
 
     destination = destination.resolve()
     if destination.exists() and not overwrite:
@@ -204,18 +203,18 @@ def download_file(
             _validate_downloaded_file(destination)
         except DatasetDownloadError as exc:
             LOGGER.warning(
-                "Existing download is invalid and will be replaced: %s (%s)",
+                "Bản tải xuống hiện tại không hợp lệ và sẽ bị thay thế: %s (%s)",
                 destination,
                 exc,
             )
         else:
-            LOGGER.info("Using existing validated archive: %s", destination)
+            LOGGER.info("Sử dụng bản tải xuống đã xác thực có sẵn: %s", destination)
             return destination
 
     if retries < 1:
-        raise ValueError("retries must be at least 1")
+        raise ValueError("retries phải ít nhất là 1")
     if timeout <= 0:
-        raise ValueError("timeout must be greater than 0")
+        raise ValueError("timeout phải lớn hơn 0")
 
     destination.parent.mkdir(parents=True, exist_ok=True)
     partial_name = f"{destination.stem}.part{destination.suffix}"
@@ -225,7 +224,7 @@ def download_file(
     last_error: DatasetDownloadError | None = None
     for attempt in range(1, retries + 1):
         LOGGER.info(
-            "Download attempt %d/%d: %s",
+            "Nỗ lực tải xuống lần %d/%d: %s",
             attempt,
             retries,
             url,
@@ -242,7 +241,7 @@ def download_file(
 
             delay = RETRY_BACKOFF_SECONDS * (2 ** (attempt - 1))
             LOGGER.warning(
-                "Download attempt %d/%d failed: %s. Retrying in %.1fs.",
+                "Nỗ lực tải xuống lần %d/%d thất bại: %s. Đang thử lại trong %.1fs.",
                 attempt,
                 retries,
                 exc,
@@ -252,17 +251,17 @@ def download_file(
         else:
             size = destination.stat().st_size
             LOGGER.info(
-                "Downloaded and validated %s (%s)",
+                "Đã tải xuống và xác thực %s (%s)",
                 destination,
                 _format_bytes(size),
             )
             return destination
 
     if last_error is None:
-        raise DatasetDownloadError("Download failed for an unknown reason.")
+        raise DatasetDownloadError("Tải xuống thất bại vì một lý do không xác định.")
 
-    failure_message = "Failed to download D3S dataset after "
-    failure_message += f"{attempt} attempt(s): {last_error}"
+    failure_message = "Tải tập dữ liệu D3S thất bại sau "
+    failure_message += f"{attempt} nỗ lực: {last_error}"
     raise DatasetDownloadError(
         failure_message,
         retryable=last_error.retryable,
@@ -270,7 +269,7 @@ def download_file(
 
 
 def extract_archive(archive_path: Path, output_dir: Path) -> list[Path]:
-    """Safely extract a zip archive while preserving its internal layout."""
+    """Giải nén an toàn kho lưu trữ zip trong khi vẫn giữ nguyên bố cục bên trong của nó."""
 
     archive_path = archive_path.resolve()
     output_dir = output_dir.resolve()
@@ -278,11 +277,11 @@ def extract_archive(archive_path: Path, output_dir: Path) -> list[Path]:
 
     if not zipfile.is_zipfile(archive_path):
         raise DatasetExtractionError(
-            f"Unsupported archive format or corrupt zip: {archive_path}"
+            f"Định dạng nén không được hỗ trợ hoặc zip bị hỏng: {archive_path}"
         )
 
     extracted_paths: list[Path] = []
-    LOGGER.info("Extracting %s into %s", archive_path, output_dir)
+    LOGGER.info("Đang giải nén %s vào %s", archive_path, output_dir)
 
     try:
         with zipfile.ZipFile(archive_path) as archive:
@@ -301,15 +300,15 @@ def extract_archive(archive_path: Path, output_dir: Path) -> list[Path]:
                 extracted_paths.append(target_path)
     except (OSError, zipfile.BadZipFile) as exc:
         raise DatasetExtractionError(
-            f"Failed to extract {archive_path}: {exc}"
+            f"Giải nén thất bại {archive_path}: {exc}"
         ) from exc
 
-    LOGGER.info("Extracted %d file(s)", len(extracted_paths))
+    LOGGER.info("Đã giải nén %d file", len(extracted_paths))
     return extracted_paths
 
 
 def discover_video_files(root_dir: Path) -> list[Path]:
-    """Find dataset videos, excluding downloader cache files."""
+    """Tìm các video của tập dữ liệu, loại trừ các file cache của trình tải xuống."""
 
     root_dir = root_dir.resolve()
     if not root_dir.exists():
@@ -327,19 +326,19 @@ def discover_video_files(root_dir: Path) -> list[Path]:
 
 
 def verify_video(video_path: Path) -> VideoVerification:
-    """Verify that OpenCV can open a video and read its first frame."""
+    """Xác minh rằng OpenCV có thể mở một video và đọc khung hình đầu tiên của nó."""
 
     video_path = video_path.resolve()
     capture = cv2.VideoCapture(str(video_path))
     try:
         if not capture.isOpened():
-            message = f"OpenCV could not open video: {video_path}"
+            message = f"OpenCV không thể mở video: {video_path}"
             raise DatasetVerificationError(message)
 
         readable, frame = capture.read()
         if not readable or frame is None:
             raise DatasetVerificationError(
-                f"OpenCV could not read the first frame: {video_path}"
+                f"OpenCV không thể đọc khung hình đầu tiên: {video_path}"
             )
 
         frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -361,13 +360,13 @@ def verify_dataset_videos(
     output_dir: Path,
     min_videos: int = 1,
 ) -> tuple[VideoVerification, ...]:
-    """Verify all videos under a prepared D3S output directory."""
+    """Xác minh tất cả các video dưới một thư mục đầu ra D3S đã chuẩn bị."""
 
     video_files = discover_video_files(output_dir)
     if len(video_files) < min_videos:
         raise DatasetVerificationError(
-            "Expected at least "
-            f"{min_videos} video(s), found {len(video_files)} in {output_dir}"
+            "Cần ít nhất "
+            f"{min_videos} video, tìm thấy {len(video_files)} trong {output_dir}"
         )
 
     checks: list[VideoVerification] = []
@@ -381,7 +380,7 @@ def verify_dataset_videos(
     if failures:
         failure_text = "\n".join(failures)
         raise DatasetVerificationError(
-            f"{len(failures)} video(s) failed verification:\n{failure_text}"
+            f"{len(failures)} video(s) thất bại khi xác minh:\n{failure_text}"
         )
 
     return tuple(checks)
@@ -398,7 +397,7 @@ def prepare_d3s_dataset(
     retries: int = DEFAULT_DOWNLOAD_RETRIES,
     timeout: float = DEFAULT_DOWNLOAD_TIMEOUT_SECONDS,
 ) -> DatasetSummary:
-    """Prepare the local D3S dataset folder and verify readable videos."""
+    """Chuẩn bị thư mục tập dữ liệu D3S cục bộ và xác minh các video có thể đọc được."""
 
     output_dir = output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -422,8 +421,8 @@ def prepare_d3s_dataset(
             _copy_single_video(archive_path, output_dir, overwrite)
         else:
             raise DatasetExtractionError(
-                "Downloaded file is neither a supported video nor a zip "
-                f"archive: {archive_path}"
+                "File tải xuống không phải là video được hỗ trợ hay file nén zip: "
+                f"{archive_path}"
             )
 
     verified_videos = verify_dataset_videos(output_dir, min_videos)
@@ -435,7 +434,7 @@ def prepare_d3s_dataset(
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    """Run the D3S dataset preparation command."""
+    """Chạy lệnh chuẩn bị tập dữ liệu D3S."""
 
     args = parse_args(argv)
     logging.basicConfig(
@@ -464,7 +463,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
 
     LOGGER.info(
-        "D3S dataset ready: %d readable video(s) under %s",
+        "Tập dữ liệu D3S đã sẵn sàng: %d video có thể đọc được dưới thư mục %s",
         summary.video_count,
         summary.output_dir,
     )
@@ -472,7 +471,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 def _download_once(url: str, destination: Path, timeout: float) -> None:
-    """Stream one download attempt and detect incomplete responses."""
+    """Phát (stream) một nỗ lực tải xuống và phát hiện các phản hồi không đầy đủ."""
 
     try:
         response = _open_download_response(url, timeout)
@@ -481,12 +480,12 @@ def _download_once(url: str, destination: Path, timeout: float) -> None:
     except urllib.error.HTTPError as exc:
         retryable = exc.code in TRANSIENT_HTTP_STATUS_CODES
         raise DatasetDownloadError(
-            f"HTTP {exc.code} {exc.reason} while requesting {url}",
+            f"Lỗi HTTP {exc.code} {exc.reason} khi đang yêu cầu {url}",
             retryable=retryable,
         ) from exc
     except (OSError, urllib.error.URLError) as exc:
         raise DatasetDownloadError(
-            f"Network connection failed while requesting {url}: {exc}"
+            f"Mất kết nối mạng khi đang yêu cầu {url}: {exc}"
         ) from exc
 
     try:
@@ -494,8 +493,8 @@ def _download_once(url: str, destination: Path, timeout: float) -> None:
             content_type = response.headers.get("Content-Type", "")
             if "text/html" in content_type.lower():
                 raise DatasetDownloadError(
-                    "The download URL returned an HTML page instead of "
-                    "dataset content. Check the URL and sharing permissions.",
+                    "URL tải xuống trả về một trang HTML thay vì nội dung "
+                    "tập dữ liệu. Hãy kiểm tra URL và quyền chia sẻ.",
                     retryable=False,
                 )
 
@@ -512,7 +511,7 @@ def _download_once(url: str, destination: Path, timeout: float) -> None:
                 now = time.monotonic()
                 if now - last_progress >= DOWNLOAD_PROGRESS_INTERVAL_SECONDS:
                     LOGGER.info(
-                        "Downloaded %s%s",
+                        "Đã tải %s%s",
                         _format_bytes(downloaded_bytes),
                         _expected_size_text(expected_bytes),
                     )
@@ -520,13 +519,13 @@ def _download_once(url: str, destination: Path, timeout: float) -> None:
     except DatasetDownloadError:
         raise
     except (OSError, urllib.error.URLError) as exc:
-        message = f"Download stream was interrupted: {exc}"
+        message = f"Luồng tải xuống bị gián đoạn: {exc}"
         raise DatasetDownloadError(message) from exc
 
     if expected_bytes is not None and downloaded_bytes != expected_bytes:
         raise DatasetDownloadError(
-            "Incomplete download: received "
-            f"{downloaded_bytes} of {expected_bytes} bytes."
+            "Tải xuống không đầy đủ: đã nhận "
+            f"{downloaded_bytes} trên tổng số {expected_bytes} bytes."
         )
 
 
@@ -534,7 +533,7 @@ def _open_download_response(
     url: str,
     timeout: float = DEFAULT_DOWNLOAD_TIMEOUT_SECONDS,
 ) -> urllib.response.addinfourl:
-    """Open a normal URL or follow Google Drive confirmation pages."""
+    """Mở một URL thông thường hoặc theo dõi các trang xác nhận của Google Drive."""
 
     file_id = _extract_google_drive_file_id(url)
     if file_id is None:
@@ -562,18 +561,18 @@ def _open_download_response(
             response.close()
 
         LOGGER.debug(
-            "Following Google Drive confirmation URL: %s",
+            "Đang theo dõi URL xác nhận của Google Drive: %s",
             request_url,
         )
 
     raise DatasetDownloadError(
-        "Google Drive returned too many confirmation pages.",
+        "Google Drive trả về quá nhiều trang xác nhận.",
         retryable=False,
     )
 
 
 def _extract_google_drive_file_id(url: str) -> str | None:
-    """Extract a Google Drive file id from common sharing URL formats."""
+    """Trích xuất file ID của Google Drive từ các định dạng URL chia sẻ phổ biến."""
 
     parsed_url = urllib.parse.urlparse(url)
     if "drive.google.com" not in parsed_url.netloc:
@@ -594,7 +593,7 @@ def _build_google_drive_download_url(
     file_id: str,
     confirm_token: str | None = None,
 ) -> str:
-    """Build a Google Drive direct download URL."""
+    """Xây dựng một URL tải xuống trực tiếp của Google Drive."""
 
     query_params = {"export": "download", "id": file_id}
     if confirm_token is not None:
@@ -608,7 +607,7 @@ def _find_google_drive_confirmation_url(
     cookie_jar: CookieJar,
     file_id: str,
 ) -> str:
-    """Build a continuation URL from a Google Drive warning page."""
+    """Xây dựng một URL tiếp nối từ một trang cảnh báo của Google Drive."""
 
     for cookie in cookie_jar:
         if cookie.name.startswith("download_warning"):
@@ -639,7 +638,7 @@ def _parse_google_drive_confirmation_form(
     response_url: str,
     file_id: str,
 ) -> str | None:
-    """Parse Drive's modern download form into a validated URL."""
+    """Phân tích biểu mẫu tải xuống hiện đại của Drive thành một URL đã được xác thực."""
 
     parser = _GoogleDriveFormParser()
     parser.feed(html)
@@ -650,15 +649,15 @@ def _parse_google_drive_confirmation_form(
     action_host = urllib.parse.urlparse(action_url).hostname
     if action_host not in GOOGLE_DRIVE_HOSTS:
         raise DatasetDownloadError(
-            "Google Drive supplied an unexpected confirmation host: "
-            f"{action_host or 'missing host'}.",
+            "Google Drive đã cung cấp một host xác nhận không mong muốn: "
+            f"{action_host or 'không có host'}.",
             retryable=False,
         )
 
     form_file_id = parser.fields.get("id")
     if form_file_id is not None and form_file_id != file_id:
         raise DatasetDownloadError(
-            "Google Drive confirmation page referenced a different file.",
+            "Trang xác nhận của Google Drive tham chiếu đến một file khác.",
             retryable=False,
         )
 
@@ -669,35 +668,36 @@ def _parse_google_drive_confirmation_form(
 
 
 def _describe_google_drive_html(html: str) -> str:
-    """Convert common Google Drive HTML failures into actionable errors."""
+    """Chuyển đổi các lỗi HTML phổ biến của Google Drive thành thông báo lỗi cụ thể."""
 
     normalized = re.sub(r"\s+", " ", html).lower()
+    # Các chuỗi tĩnh bên dưới giữ nguyên tiếng Anh để khớp với thông báo máy chủ
     if "too many users have viewed or downloaded this file" in normalized:
         return (
-            "Google Drive download quota is exceeded for the D3S file. "
-            "Wait for the quota to reset or use --archive-path with a "
-            "manually downloaded copy."
+            "Quota tải xuống của Google Drive đã vượt giới hạn cho file D3S. "
+            "Hãy đợi quota reset hoặc dùng tham số --archive-path với một "
+            "bản copy đã tải xuống thủ công."
         )
     if "request access" in normalized or "you need access" in normalized:
         return (
-            "The D3S Google Drive file is not publicly accessible. "
-            "Request access or use --archive-path with an authorized copy."
+            "File Google Drive D3S không ở trạng thái truy cập công khai. "
+            "Hãy yêu cầu quyền truy cập hoặc dùng --archive-path với bản copy được ủy quyền."
         )
     if "sign in" in normalized and "download" in normalized:
         return (
-            "Google Drive requires authentication for the D3S file. "
-            "Download it in a browser and pass the file via --archive-path."
+            "Google Drive yêu cầu đăng nhập đối với file D3S. "
+            "Hãy tải file trên trình duyệt web rồi truyền tham số --archive-path."
         )
 
     return (
-        "Google Drive returned an unsupported HTML response instead of the "
-        "D3S archive. The sharing page format may have changed; use "
-        "--archive-path with a manually downloaded copy."
+        "Google Drive trả về phản hồi HTML không được hỗ trợ thay vì "
+        "file nén D3S. Định dạng trang chia sẻ có thể đã thay đổi; hãy dùng "
+        "--archive-path với bản copy tải thủ công."
     )
 
 
 def _build_request(url: str) -> urllib.request.Request:
-    """Build a download request with headers accepted by common hosts."""
+    """Xây dựng một yêu cầu tải xuống với các header được các host phổ biến chấp nhận."""
 
     return urllib.request.Request(
         url,
@@ -709,7 +709,7 @@ def _build_request(url: str) -> urllib.request.Request:
 
 
 def _content_length(response: urllib.response.addinfourl) -> int | None:
-    """Read a valid non-negative Content-Length response header."""
+    """Đọc một header phản hồi Content-Length hợp lệ không âm."""
 
     value = response.headers.get("Content-Length")
     if value is None:
@@ -717,44 +717,44 @@ def _content_length(response: urllib.response.addinfourl) -> int | None:
     try:
         length = int(value)
     except ValueError:
-        LOGGER.warning("Ignoring invalid Content-Length header: %s", value)
+        LOGGER.warning("Bỏ qua header Content-Length không hợp lệ: %s", value)
         return None
     return length if length >= 0 else None
 
 
 def _validate_downloaded_file(path: Path) -> None:
-    """Reject empty or structurally invalid downloaded files."""
+    """Từ chối các file tải về rỗng hoặc sai cấu trúc."""
 
     if not path.is_file() or path.stat().st_size == 0:
-        raise DatasetDownloadError(f"Downloaded file is empty: {path}")
+        raise DatasetDownloadError(f"File tải xuống bị rỗng: {path}")
 
     if path.suffix.lower() != ".zip":
         return
 
     if not zipfile.is_zipfile(path):
-        message = f"Downloaded ZIP is incomplete or corrupt: {path}"
+        message = f"File ZIP tải xuống bị thiếu hoặc hỏng: {path}"
         raise DatasetDownloadError(message)
 
     try:
         with zipfile.ZipFile(path) as archive:
             if not archive.infolist():
-                message = f"Downloaded ZIP contains no files: {path}"
+                message = f"File ZIP tải xuống không chứa file nào: {path}"
                 raise DatasetDownloadError(message)
     except zipfile.BadZipFile as exc:
-        message = f"Downloaded ZIP is corrupt: {path}"
+        message = f"File ZIP tải xuống bị hỏng: {path}"
         raise DatasetDownloadError(message) from exc
 
 
 def _expected_size_text(expected_bytes: int | None) -> str:
-    """Format optional total size text for progress logging."""
+    """Định dạng văn bản hiển thị tổng kích thước nếu có để ghi log tiến trình."""
 
     if expected_bytes is None:
         return ""
-    return f" of {_format_bytes(expected_bytes)}"
+    return f" trên tổng số {_format_bytes(expected_bytes)}"
 
 
 def _format_bytes(byte_count: int) -> str:
-    """Format a byte count for concise terminal progress messages."""
+    """Định dạng số byte để xuất ra thông báo tiến trình ngắn gọn trên terminal."""
 
     size = float(byte_count)
     for unit in ("B", "KiB", "MiB", "GiB"):
@@ -765,20 +765,20 @@ def _format_bytes(byte_count: int) -> str:
 
 
 def _positive_int(value: str) -> int:
-    """Parse a strictly positive command-line integer."""
+    """Phân tích một số nguyên dương từ dòng lệnh."""
 
     parsed = int(value)
     if parsed < 1:
-        raise argparse.ArgumentTypeError("value must be at least 1")
+        raise argparse.ArgumentTypeError("giá trị phải ít nhất là 1")
     return parsed
 
 
 def _positive_float(value: str) -> float:
-    """Parse a strictly positive command-line float."""
+    """Phân tích một số thực dương từ dòng lệnh."""
 
     parsed = float(value)
     if parsed <= 0:
-        raise argparse.ArgumentTypeError("value must be greater than 0")
+        raise argparse.ArgumentTypeError("giá trị phải lớn hơn 0")
     return parsed
 
 
@@ -787,29 +787,29 @@ def _copy_single_video(
     output_dir: Path,
     overwrite: bool,
 ) -> Path:
-    """Copy one standalone video into the D3S output directory."""
+    """Sao chép một video độc lập vào thư mục đầu ra D3S."""
 
     source_path = source_path.resolve()
     target_path = (output_dir / source_path.name).resolve()
     _ensure_child_path(target_path, output_dir.resolve())
 
     if target_path.exists() and not overwrite:
-        LOGGER.info("Using existing video: %s", target_path)
+        LOGGER.info("Sử dụng video có sẵn: %s", target_path)
         return target_path
 
     shutil.copy2(source_path, target_path)
-    LOGGER.info("Copied video to %s", target_path)
+    LOGGER.info("Đã sao chép video tới %s", target_path)
     return target_path
 
 
 def _ensure_child_path(path: Path, parent: Path) -> None:
-    """Ensure ``path`` resolves inside ``parent``."""
+    """Đảm bảo ``path`` thuộc bên trong ``parent``."""
 
     try:
         path.relative_to(parent)
     except ValueError as exc:
         raise DatasetExtractionError(
-            f"Refusing to write outside dataset directory: {path}"
+            f"Từ chối ghi ra ngoài thư mục tập dữ liệu: {path}"
         ) from exc
 
 

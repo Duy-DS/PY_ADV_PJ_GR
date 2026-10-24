@@ -10,7 +10,6 @@ import time
 from pathlib import Path
 from typing import Optional
 
-# C?u h?nh UTF-8 cho stdout/stderr ?? tr?nh l?i m? h?a k? t? tr?n Windows
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
@@ -18,7 +17,6 @@ if sys.platform == "win32":
 import cv2
 import numpy as np
 
-# Thi?t l?p ???ng d?n g?c d? ?n ?? ??m b?o import ??ng
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
@@ -56,7 +54,9 @@ def main(device_id: int = 0, max_frames: Optional[int] = None) -> None:
     mouth_ext = MouthFeatureExtractor(mar_threshold=cfg["mouth"]["mar_threshold"])
 
     print(f">> [INFO] ?ang b?t Webcam thi?t b? {device_id}... H?y nh?n v?o camera.")
-    print(">> [INFO] Nh?n ph?m 'q', 'Q', 'ESC' ho?c b?m [X] tr?n c?a s? ?? tho?t (ho?c Ctrl+C t?i Terminal).")
+    print(
+        ">> [INFO] Nh?n ph?m 'q', 'Q', 'ESC' ho?c b?m [X] tr?n c?a s? ?? tho?t (ho?c Ctrl+C t?i Terminal)."
+    )
 
     cv2.namedWindow(WINDOW_TITLE, cv2.WINDOW_NORMAL)
     prev_time = time.perf_counter()
@@ -69,7 +69,6 @@ def main(device_id: int = 0, max_frames: Optional[int] = None) -> None:
             fps = 1.0 / (curr_time - prev_time) if (curr_time - prev_time) > 0 else 0.0
             prev_time = curr_time
 
-            # 1. Tr?ch xu?t landmark t? LandmarkDetector
             lm = detector.extract_landmarks(frame)
 
             if lm.get("face_detected", False):
@@ -83,7 +82,9 @@ def main(device_id: int = 0, max_frames: Optional[int] = None) -> None:
                 mar_val = mouth_res.get("mar", 0.0)
                 mouth_st = mouth_res.get("mouth_state", "UNKNOWN")
 
-                hud_info = f"EAR: {ear_val:.2f} [{eye_st}] - MAR: {mar_val:.2f} [{mouth_st}]"
+                hud_info = (
+                    f"EAR: {ear_val:.2f} [{eye_st}] - MAR: {mar_val:.2f} [{mouth_st}]"
+                )
                 color = (0, 255, 0) if eye_st == "OPEN" else (0, 165, 255)
                 cv2.putText(
                     frame,
@@ -122,24 +123,24 @@ def main(device_id: int = 0, max_frames: Optional[int] = None) -> None:
             # B?t s? ki?n tho?t: q, Q, ESC (27) ho?c b?m ??ng c?a s?
             key = cv2.waitKey(1) & 0xFF
             if key in EXIT_KEYS or window_was_closed(WINDOW_TITLE):
-                print("[INFO] Nh?n t?n hi?u d?ng t? ng??i d?ng.")
+                print(" Nh?n t?n hi?u d?ng t? ng??i d?ng.")
                 break
 
             if max_frames and frame_count >= max_frames:
-                print(f"[INFO] ?? ??t gi?i h?n {max_frames} frames.")
+                print(f" ?? ??t gi?i h?n {max_frames} frames.")
                 break
 
     except KeyboardInterrupt:
-        print("[INFO] ?? nh?n t?n hi?u d?ng (Ctrl+C) t? Terminal.")
+        print(" ?? nh?n t?n hi?u d?ng (Ctrl+C) t? Terminal.")
     finally:
         # FReq032: ??m b?o gi?i ph?ng to?n b? t?i nguy?n an to?n
         cam.release()
         detector.release()
         cv2.destroyAllWindows()
-        print(f"[SUCCESS] ?? x? l? {frame_count} frames v? gi?i ph?ng an to?n Camera, MediaPipe v? c?a s? OpenCV.")
+        print(
+            f" ?? x? l? {frame_count} frames v? gi?i ph?ng an to?n Camera, MediaPipe v? c?a s? OpenCV."
+        )
 
 
 if __name__ == "__main__":
     main()
-
-

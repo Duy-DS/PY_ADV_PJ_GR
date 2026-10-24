@@ -15,6 +15,10 @@ from typing import Literal, Protocol, TypedDict, cast
 import cv2
 import numpy as np
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+from src.visualization.dashboard import DashboardVisualizer
 from src.acquisition.camera import CameraStream
 from src.acquisition.video_reader import VideoReader
 from src.alert.alert_manager import AlertManager, AlertState
@@ -30,6 +34,7 @@ from src.utils.contracts import (
     unknown_mouth,
 )
 from src.visualization.overlay import HUDVisualizer
+
 
 LOGGER = logging.getLogger(__name__)
 ROOT = Path(__file__).resolve().parents[2]
@@ -165,9 +170,7 @@ class RealtimePipeline:
         Raises: OSError, ValueError nếu cấu hình không hợp lệ.
         """
         self.config_path = (
-            ROOT / "configs/default.yaml"
-            if config_path is None
-            else Path(config_path)
+            ROOT / "configs/default.yaml" if config_path is None else Path(config_path)
         )
         if not self.config_path.is_absolute():
             self.config_path = ROOT / self.config_path
@@ -199,9 +202,7 @@ class RealtimePipeline:
         if self.reader is None:
             text = str(source)
             if text == "webcam" or text.isdecimal():
-                self.reader = CameraStream(
-                    0 if text == "webcam" else int(text)
-                )
+                self.reader = CameraStream(0 if text == "webcam" else int(text))
             else:
                 self.reader = VideoReader(source)
         if self.face_detector is None:
@@ -213,9 +214,7 @@ class RealtimePipeline:
             )
         if self.landmark_detector is None:
             self.landmark_detector = LandmarkDetector(
-                model_path=str(
-                    ROOT / "models/pretrained/face_landmarker.task"
-                ),
+                model_path=str(ROOT / "models/pretrained/face_landmarker.task"),
                 min_detection_confidence=self.confidence,
             )
 
@@ -259,8 +258,17 @@ class RealtimePipeline:
             frames = iter(self.reader)
             if max_frames is not None:
                 frames = islice(frames, max_frames)
+            ear_thresh = float(self.config.get("eye", {}).get("ear_threshold", 0.2))
+            mar_thresh = float(self.config.get("mouth", {}).get("mar_threshold", 0.6))
+            dashboard = None
+
             for frame_id, timestamp, frame in frames:
+                # Chuẩn bị thông số cho Dashboard
                 tick = perf_counter()
+                target_height = 480
+                h, w = frame.shape[:2]
+                new_width = int((target_height / h) * w)
+                frame = cv2.resize(frame, (new_width, target_height))
                 face = self.face_detector.process(frame)
                 detected = bool(face.get("face_detected", False))
                 eye, mouth = unknown_eye(), unknown_mouth()
@@ -278,26 +286,19 @@ class RealtimePipeline:
                         )
                         if eye.is_valid and mouth.is_valid:
                             landmarks = points
-                temporal = self.temporal.update(
-                    detected, timestamp, eye, mouth
-                )
-                rule_input = RuleInput(
-                    face_detected=temporal.is_valid,
-                    prolonged_eye_closure=(
-                        temporal.behavior.is_prolonged_closure
-                    ),
-                    yawn_frequency=(
-                        temporal.behavior.yawn_frequency_in_window
-                    ),
-                )
+                temporal = self.temporal.update(detected, timestamp, eye, mouth)
+                # rule_input = RuleInput(
+                #     face_detected=temporal.is_valid,
+                #     prolonged_eye_closure=(temporal.behavior.is_prolonged_closure),
+                #     yawn_frequency=(temporal.behavior.yawn_frequency_in_window),
+                # )
                 decision = cast(
-                    DecisionResult, self.engine.evaluate(rule_input)
+                    DecisionResult, self.engine.evaluate(temporal.model_dump())
                 )
                 previous_alert = self.alert_manager.state
                 alert = self.alert_manager.update(decision, timestamp)
                 alerts += int(
-                    alert == AlertState.WARNING
-                    and previous_alert != AlertState.WARNING
+                    alert == AlertState.WARNING and previous_alert != AlertState.WARNING
                 )
                 inference_ms = (perf_counter() - tick) * 1000
                 hud_fps = len(recent) / sum(recent) if sum(recent) else 0.0
@@ -339,8 +340,22 @@ class RealtimePipeline:
                             len(recent) / sum(recent) if sum(recent) else 0.0,
                         )
                     )
+                if dashboard is None:
+                    dashboard = DashboardVisualizer(
+                        frame.shape[0],
+                        history_size=100,
+                        ear_thresh=ear_thresh,
+                        mar_thresh=mar_thresh,
+                    )
+
+                dashboard.update(eye.avg_ear, mouth.mar, frame_id)
+
+                dash_img = dashboard.render()
+
+                combined_frame = cv2.hconcat([rendered, dash_img])
+
                 if display:
-                    cv2.imshow("Driver Drowsiness Detection", rendered)
+                    cv2.imshow("Driver Drowsiness Detection Dashboard", combined_frame)
                     if cv2.waitKey(1) & 0xFF in (ord("q"), ord("Q"), 27):
                         interrupted = True
                         break

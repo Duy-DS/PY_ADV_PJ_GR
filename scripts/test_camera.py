@@ -1,4 +1,4 @@
-"""Interactively verify T0301 live-camera acquisition and display."""
+"""Xác minh tương tác việc thu thập và hiển thị luồng camera trực tiếp cho T0301."""
 
 from __future__ import annotations
 
@@ -16,9 +16,9 @@ if str(REPO_ROOT) not in sys.path:
 
 from src.acquisition.camera import CameraStream  # noqa: E402
 
-WINDOW_TITLE = "Webcam Stream (Task T0301)"
+WINDOW_TITLE = "Luồng Webcam (Task T0301)"
 EXIT_KEYS = {ord("q"), ord("Q"), 27}
-EXIT_PROMPT = "Press 'q' / 'ESC' on window or Ctrl+C in terminal to exit"
+EXIT_PROMPT = "Nhấn 'q' / 'ESC' trên cửa sổ hoặc Ctrl+C ở terminal để thoát"
 
 
 def draw_camera_hud(
@@ -27,24 +27,24 @@ def draw_camera_hud(
     elapsed: float,
     live_fps: float,
 ) -> None:
-    """Draw live camera telemetry and exit controls on a frame.
+    """Vẽ thông số từ xa (telemetry) của camera trực tiếp và điều khiển thoát lên khung hình.
 
-    Parameters:
-        frame: Mutable BGR frame displayed by OpenCV.
-        frame_id: Zero-based camera frame index.
-        elapsed: Monotonic elapsed stream time in seconds.
-        live_fps: Average observed frame rate for this stream.
+    Tham số:
+        frame: Khung hình BGR có thể thay đổi được hiển thị bởi OpenCV.
+        frame_id: Chỉ số khung hình camera bắt đầu từ 0.
+        elapsed: Thời gian luồng đã trôi qua tính bằng giây.
+        live_fps: Tốc độ khung hình trung bình quan sát được cho luồng này.
 
-    Returns:
-        None.
+    Trả về:
+        Không có.
 
-    Raises:
-        cv2.error: If OpenCV cannot render text on the supplied frame.
+    Ngoại lệ:
+        cv2.error: Nếu OpenCV không thể vẽ chữ lên khung hình cung cấp.
     """
 
     telemetry = (
-        f"Frame ID: {frame_id} | Elapsed: {elapsed:.2f} s | "
-        f"Live FPS: {live_fps:.2f}"
+        f"Frame ID: {frame_id} | Thoi gian: {elapsed:.2f} s | "
+        f"FPS Truc tiep: {live_fps:.2f}"
     )
     cv2.putText(
         frame,
@@ -69,46 +69,43 @@ def draw_camera_hud(
 
 
 def window_was_closed(window_title: str) -> bool:
-    """Return whether a user closed an OpenCV display window.
+    """Trả về True nếu người dùng đã đóng cửa sổ hiển thị OpenCV.
 
-    Parameters:
-        window_title: Name passed to ``cv2.namedWindow``.
+    Tham số:
+        window_title: Tên được truyền vào ``cv2.namedWindow``.
 
-    Returns:
-        True when the window is no longer visible, otherwise False.
-
-    Raises:
-        None.
+    Trả về:
+        True khi cửa sổ không còn hiển thị nữa, ngược lại là False.
     """
 
     try:
-        return cv2.getWindowProperty(
-            window_title,
-            cv2.WND_PROP_VISIBLE,
-        ) < 1
+        return (
+            cv2.getWindowProperty(
+                window_title,
+                cv2.WND_PROP_VISIBLE,
+            )
+            < 1
+        )
     except cv2.error:
         return True
 
 
 def run_camera_test(device_id: int) -> None:
-    """Open and display a live camera stream with safe termination.
+    """Mở và hiển thị luồng camera trực tiếp với khả năng chấm dứt an toàn.
 
-    Parameters:
-        device_id: OpenCV camera device index.
+    Tham số:
+        device_id: Chỉ số thiết bị camera OpenCV.
 
-    Returns:
-        None.
-
-    Raises:
-        ValueError: If OpenCV cannot open the requested camera device.
+    Ngoại lệ:
+        ValueError: Nếu OpenCV không thể mở thiết bị camera được yêu cầu.
     """
 
     camera: CameraStream | None = None
     try:
         camera = CameraStream(device_id=device_id)
         cv2.namedWindow(WINDOW_TITLE, cv2.WINDOW_NORMAL)
-        print(f"[INFO] Camera stream opened on device index: {device_id}")
-        print(f"[INFO] Controls: {EXIT_PROMPT}.")
+        print(f" Luồng camera đã được mở trên chỉ số thiết bị: {device_id}")
+        print(f" Điều khiển: {EXIT_PROMPT}.")
 
         frame_count = 0
         for frame_id, timestamp, frame in camera:
@@ -124,67 +121,47 @@ def run_camera_test(device_id: int) -> None:
 
             key_code = cv2.waitKey(1) & 0xFF
             if key_code in EXIT_KEYS:
-                print("[INFO] Exit key detected from OpenCV window.")
+                print(" Đã phát hiện phím thoát từ cửa sổ OpenCV.")
                 break
             if window_was_closed(WINDOW_TITLE):
-                print("[INFO] OpenCV window was closed.")
+                print(" Cửa sổ OpenCV đã bị đóng.")
                 break
         else:
-            print("[INFO] Camera stream ended or disconnected.")
+            print(" Luồng camera kết thúc hoặc bị ngắt kết nối.")
     except KeyboardInterrupt:
-        print("\n[INFO] Ctrl+C received from terminal.")
+        print("\n Đã nhận được lệnh Ctrl+C từ terminal.")
     finally:
         if camera is not None:
             camera.release()
         cv2.destroyAllWindows()
-        print("[SUCCESS] Camera resources released cleanly (FReq032).")
+        print(" Đã giải phóng sạch sẽ tài nguyên camera (FReq032).")
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """Build the command-line parser for interactive camera capture.
-
-    Parameters:
-        None.
-
-    Returns:
-        Configured argument parser.
-
-    Raises:
-        None.
-    """
+    """Xây dựng bộ phân tích tham số dòng lệnh để chụp ảnh camera tương tác."""
 
     parser = argparse.ArgumentParser(
-        description="Interactively test the T0301 live camera stream."
+        description="Kiểm thử tương tác luồng camera trực tiếp (Task T0301)."
     )
     parser.add_argument(
         "--device",
         type=int,
         default=0,
-        help="Camera device index (default: 0).",
+        help="Chỉ số thiết bị camera (mặc định: 0).",
     )
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    """Run the camera verification command-line interface.
-
-    Parameters:
-        argv: Optional argument sequence used instead of ``sys.argv``.
-
-    Returns:
-        Process exit code: zero for success, one when the camera cannot open.
-
-    Raises:
-        None.
-    """
+    """Chạy giao diện dòng lệnh xác minh camera."""
 
     args = build_parser().parse_args(argv)
     try:
         run_camera_test(args.device)
     except ValueError as error:
-        print(f"[ERROR] {error}", file=sys.stderr)
+        print(f" {error}", file=sys.stderr)
         print(
-            "[HINT] Check camera permissions or try another --device index.",
+            " Vui lòng kiểm tra quyền truy cập camera hoặc thử chỉ số --device khác.",
             file=sys.stderr,
         )
         return 1

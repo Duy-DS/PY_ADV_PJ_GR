@@ -24,15 +24,30 @@ DEFAULT_VIDEO = REPO_ROOT / "data" / "raw" / "d3s" / "d3s_video_dataset.mp4"
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Ki?m tra tr?ch xu?t ??c tr?ng m?t (EAR) v? mi?ng (MAR).")
-    parser.add_argument("--source", type=str, default=str(DEFAULT_VIDEO), help="???ng d?n video ho?c webcam ID.")
-    parser.add_argument("--max-frames", type=int, default=None, help="S? khung h?nh t?i ?a x? l?.")
-    parser.add_argument("--no-visual", dest="visual", action="store_false", default=True, help="T?t c?a s? ?? h?a.")
+    parser = argparse.ArgumentParser(
+        description="Ki?m tra tr?ch xu?t ??c tr?ng m?t (EAR) v? mi?ng (MAR)."
+    )
+    parser.add_argument(
+        "--source",
+        type=str,
+        default=str(DEFAULT_VIDEO),
+        help="???ng d?n video ho?c webcam ID.",
+    )
+    parser.add_argument(
+        "--max-frames", type=int, default=None, help="S? khung h?nh t?i ?a x? l?."
+    )
+    parser.add_argument(
+        "--no-visual",
+        dest="visual",
+        action="store_false",
+        default=True,
+        help="T?t c?a s? ?? h?a.",
+    )
     args = parser.parse_args()
 
     video_path = Path(args.source)
     if not video_path.exists():
-        print(f"[ERROR] Kh?ng t?m th?y video t?i: {video_path}")
+        print(f" Kh?ng t?m th?y video t?i: {video_path}")
         return
 
     cfg = load_config(str(CONFIG_PATH))
@@ -43,7 +58,9 @@ def main():
 
     print(">> ?ang ch?y ki?m th? Pipeline...")
     if args.visual:
-        print(">> Nh?n Q ho?c ESC tr?n c?a s? hi?n th? ?? d?ng (ho?c Ctrl+C t?i Terminal).")
+        print(
+            ">> Nh?n Q ho?c ESC tr?n c?a s? hi?n th? ?? d?ng (ho?c Ctrl+C t?i Terminal)."
+        )
     else:
         print(">> Ch? ?? kh?ng ?? h?a (--no-visual)... Nh?n Ctrl+C ?? d?ng.")
 
@@ -51,7 +68,7 @@ def main():
     try:
         for frame_id, ts, frame in reader:
             if args.max_frames and frame_count >= args.max_frames:
-                print(f"[INFO] ?? ??t gi?i h?n {args.max_frames} frames.")
+                print(f" ?? ??t gi?i h?n {args.max_frames} frames.")
                 break
 
             lm = detector.extract_landmarks(frame)
@@ -69,7 +86,7 @@ def main():
 
                 hud_text = f"Frame {frame_id:04d} | EAR: {ear_val:.2f} ({eye_st}) - MAR: {mar_val:.2f} ({mouth_st})"
                 if not args.visual and frame_count % 30 == 0:
-                    print(f"[PROGRESS] {hud_text}")
+                    print(f" {hud_text}")
 
                 if args.visual:
                     cv2.putText(
@@ -83,7 +100,7 @@ def main():
                     )
             else:
                 if not args.visual and frame_count % 30 == 0:
-                    print(f"[PROGRESS] Frame {frame_id:04d} | FACE NOT DETECTED (UNKNOWN)")
+                    print(f" Frame {frame_id:04d} | FACE NOT DETECTED (UNKNOWN)")
                 if args.visual:
                     cv2.putText(
                         frame,
@@ -101,19 +118,18 @@ def main():
                 cv2.imshow("Test Features Frame-Level (T1001 PoC)", frame)
                 key = cv2.waitKey(1) & 0xFF
                 if key in (ord("q"), ord("Q"), 27):
-                    print("[INFO] Nh?n t?n hi?u d?ng t? c?a s? giao di?n.")
+                    print(" Nh?n t?n hi?u d?ng t? c?a s? giao di?n.")
                     break
 
     except KeyboardInterrupt:
-        print("[INFO] ?? d?ng t? Terminal.")
+        print(" ?? d?ng t? Terminal.")
     finally:
         reader.release()
         detector.release()
         if args.visual:
             cv2.destroyAllWindows()
-        print(f"[SUCCESS] ?? x? l? {frame_count} frames v? gi?i ph?ng t?i nguy?n an to?n.")
+        print(f" ?? x? l? {frame_count} frames v? gi?i ph?ng t?i nguy?n an to?n.")
 
 
 if __name__ == "__main__":
     main()
-

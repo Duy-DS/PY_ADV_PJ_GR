@@ -1,2 +1,2 @@
 video_id,relative_path,file_name,subject_id,label,label_source,resolution,width,height,fps,total_frames,duration_sec,file_size_bytes
-d3s_0001,d3s_video_dataset.mp4,d3s_video_dataset.mp4,UNKNOWN,UNKNOWN,unparsed,1920x1080,1920,1080,23.976024,4673,194.903042,373484539
+d3s_0001,d3s/d3s_video_dataset.mp4,d3s_video_dataset.mp4,UNKNOWN,UNKNOWN,unparsed,1920x1080,1920,1080,23.976024,4673,194.903042,373484539

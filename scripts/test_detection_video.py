@@ -1,5 +1,3 @@
-"""Interactively verify T0401 & T0402 face/landmark detection on a video file."""
-
 import argparse
 import sys
 from pathlib import Path
@@ -39,7 +37,7 @@ def run_video_detection(video_path: Path) -> None:
         reader = VideoReader(video_path)
         delay_ms = max(1, round(1000.0 / reader.fps))
         cv2.namedWindow(WINDOW_TITLE, cv2.WINDOW_NORMAL)
-        print(f"[INFO] Playing video: {reader.video_path.name}")
+        print(f" Playing video: {reader.video_path.name}")
 
         for frame_id, timestamp, frame in reader:
             # Xử lý Face Detection
@@ -74,7 +72,7 @@ def run_video_detection(video_path: Path) -> None:
         face_detector.release()
         landmark_detector.release()
         cv2.destroyAllWindows()
-        print("[INFO] Cleanly released resources.")
+        print(" Cleanly released resources.")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -89,7 +87,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         run_video_detection(args.source)
     except Exception as e:
-        print(f"[ERROR] {e}", file=sys.stderr)
+        print(f" {e}", file=sys.stderr)
         return 1
     return 0
 

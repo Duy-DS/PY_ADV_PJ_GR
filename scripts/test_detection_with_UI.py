@@ -19,22 +19,22 @@ from src.detection.landmark_detector import LandmarkDetector
 
 def run_pipeline(use_camera: bool, video_path: str = ""):
     """Chạy pipeline xử lý trên nguồn dữ liệu được chọn."""
-    print("[INFO] Đang khởi tạo mô hình AI...")
+    print(" Đang khởi tạo mô hình AI...")
     face_detector = FaceDetector()
     landmark_detector = LandmarkDetector()
 
     try:
         if use_camera:
-            print("[INFO] Đang kết nối Webcam...")
+            print(" Đang kết nối Webcam...")
             stream = CameraStream(device_id=0)
         else:
-            print(f"[INFO] Đang mở video: {video_path}")
+            print(f" Đang mở video: {video_path}")
             stream = VideoReader(video_path)
     except Exception as e:
-        print(f"[ERROR] Không thể mở dữ liệu đầu vào: {e}")
+        print(f" Không thể mở dữ liệu đầu vào: {e}")
         return
 
-    print("[INFO] Bấm phím 'q' hoặc 'ESC' trên cửa sổ video để thoát.")
+    print(" Bấm phím 'q' hoặc 'ESC' trên cửa sổ video để thoát.")
 
     with stream as source:
         for frame_id, timestamp, frame in source:
@@ -92,7 +92,7 @@ def run_pipeline(use_camera: bool, video_path: str = ""):
     face_detector.release()
     landmark_detector.release()
     cv2.destroyAllWindows()
-    print("[INFO] Đã đóng pipeline an toàn.")
+    print(" Đã đóng pipeline an toàn.")
 
 
 def show_gui():

@@ -1,5 +1,3 @@
-"""Interactively verify T0401 & T0402 face/landmark detection on live camera."""
-
 import argparse
 import sys
 from pathlib import Path
@@ -49,7 +47,7 @@ def run_camera_detection(device_id: int) -> None:
     try:
         camera = CameraStream(device_id=device_id)
         cv2.namedWindow(WINDOW_TITLE, cv2.WINDOW_NORMAL)
-        print(f"[INFO] Camera stream opened on device: {device_id}")
+        print(f" Camera stream opened on device: {device_id}")
 
         frame_count = 0
         for frame_id, timestamp, frame in camera:
@@ -88,7 +86,7 @@ def run_camera_detection(device_id: int) -> None:
         face_detector.release()
         landmark_detector.release()
         cv2.destroyAllWindows()
-        print("[INFO] Cleanly released resources.")
+        print(" Cleanly released resources.")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -101,7 +99,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         run_camera_detection(args.device)
     except Exception as e:
-        print(f"[ERROR] {e}", file=sys.stderr)
+        print(f" {e}", file=sys.stderr)
         return 1
     return 0
 

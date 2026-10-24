@@ -1,4 +1,4 @@
-"""Create an executed D3S exploration notebook from the inventory CSV."""
+"""Tạo notebook khám phá tập dữ liệu D3S đã thực thi từ file CSV inventory."""
 
 from __future__ import annotations
 
@@ -21,28 +21,28 @@ DEFAULT_NOTEBOOK_PATH = REPO_ROOT / "notebooks" / NOTEBOOK_FILENAME
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
-    """Parse command-line arguments for notebook generation."""
+    """Tạo bộ phân tích tham số dòng lệnh."""
 
     parser = argparse.ArgumentParser(
-        description="Build an executed D3S dataset exploration notebook."
+        description="Xây dựng notebook khám phá tập dữ liệu D3S đã thực thi."
     )
     parser.add_argument(
         "--inventory",
         type=Path,
         default=DEFAULT_INVENTORY_PATH,
-        help="Input D3S inventory CSV path.",
+        help="Đường dẫn đầu vào của file CSV inventory D3S.",
     )
     parser.add_argument(
         "--output",
         type=Path,
         default=DEFAULT_NOTEBOOK_PATH,
-        help="Output notebook path.",
+        help="Đường dẫn đầu ra cho notebook.",
     )
     return parser.parse_args(argv)
 
 
 def read_inventory(inventory_path: Path) -> list[dict[str, str]]:
-    """Read the inventory CSV into plain dictionaries."""
+    """Đọc file CSV inventory thành danh sách các từ điển thông thường."""
 
     with inventory_path.open(newline="", encoding="utf-8") as csv_file:
         return list(csv.DictReader(csv_file))
@@ -53,7 +53,7 @@ def write_notebook(
     inventory_path: Path,
     output_path: Path,
 ) -> None:
-    """Write a valid executed notebook with chart outputs."""
+    """Ghi một notebook hợp lệ đã được thực thi kèm theo kết quả biểu đồ."""
 
     output_path = output_path.resolve()
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -65,12 +65,12 @@ def write_notebook(
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    """Run notebook generation."""
+    """Chạy quy trình tạo notebook."""
 
     args = parse_args(argv)
     records = read_inventory(args.inventory)
     write_notebook(records, args.inventory, args.output)
-    print(f"Wrote executed dataset notebook to {args.output}")
+    print(f"Đã ghi notebook tập dữ liệu đã thực thi tại {args.output}")
     return 0
 
 
@@ -78,15 +78,15 @@ def _build_notebook(
     records: Sequence[dict[str, str]],
     inventory_path: Path,
 ) -> dict[str, Any]:
-    """Build a notebook JSON structure with precomputed outputs."""
+    """Xây dựng cấu trúc JSON của notebook với các kết quả (outputs) được tính toán trước."""
 
     cells: list[dict[str, Any]] = [
         _markdown_cell(
-            "# D3S Dataset Exploration\n\n"
-            "Task T0202 inventory review for the Driver Drowsiness Detection "
-            "System. The notebook reads `data/metadata/d3s_inventory.csv`, "
-            "summarizes video-level metadata, and records split guidance that "
-            "keeps subject/video boundaries intact."
+            "# Khám phá tập dữ liệu D3S\n\n"
+            "Task T0202 đánh giá inventory cho Hệ thống Phát hiện Buồn ngủ "
+            "của Tài xế. Notebook này đọc file `data/metadata/d3s_inventory.csv`, "
+            "tóm tắt siêu dữ liệu (metadata) ở cấp độ video, và ghi chép lại hướng dẫn "
+            "chia tách dữ liệu sao cho giữ nguyên được ranh giới của đối tượng/video."
         ),
         _code_cell(
             "\n".join(
@@ -103,14 +103,13 @@ def _build_notebook(
                     "as csv_file:",
                     "    records = list(csv.DictReader(csv_file))",
                     "",
-                    "print(f'Loaded {len(records)} video record(s) from "
-                    "{inventory_path}')",
+                    "print(f'Đã tải {len(records)} bản ghi video từ {inventory_path}')",
                 ]
             ),
             execution_count=1,
             text_output=(
-                "Loaded "
-                f"{len(records)} video record(s) from "
+                "Đã tải "
+                f"{len(records)} bản ghi video từ "
                 f"{_display_path(inventory_path)}\n"
             ),
         ),
@@ -134,13 +133,13 @@ def _build_notebook(
             text_output=_inventory_table_text(records),
         ),
         _markdown_cell(
-            "## Metadata Provenance\n\n"
-            "Subject and class labels are parsed only from path or filename "
-            "tokens such as `subject_02/yawning/sample.mp4`. The current "
-            "local D3S artifact is a single monolithic MP4 named "
-            "`d3s_video_dataset.mp4`, so its subject and label fields "
-            "remain `UNKNOWN` until the team imports a structured "
-            "video/frame release or adds verified segment annotations."
+            "## Nguồn gốc của Siêu dữ liệu (Metadata Provenance)\n\n"
+            "Các nhãn về đối tượng và phân lớp chỉ được phân tích cú pháp từ các thành phần "
+            "trong đường dẫn hoặc tên file, ví dụ như `subject_02/yawning/sample.mp4`. Cấu trúc "
+            "D3S nội bộ hiện tại là một file MP4 nguyên khối duy nhất có tên là "
+            "`d3s_video_dataset.mp4`, vì vậy các trường đối tượng và nhãn của nó "
+            "sẽ duy trì trạng thái `UNKNOWN` (Không xác định) cho đến khi nhóm dự án nhập vào một "
+            "cấu trúc phát hành khung hình/video bài bản hoặc bổ sung thêm các chú thích phân đoạn đã được kiểm chứng."
         ),
         _code_cell(
             "\n".join(
@@ -151,9 +150,9 @@ def _build_notebook(
                     "fig, ax = plt.subplots(figsize=(6, 4))",
                     "ax.bar(label_counts.keys(), label_counts.values(), "
                     "color='#2f80ed')",
-                    "ax.set_title('D3S class frequency by video record')",
-                    "ax.set_xlabel('Label')",
-                    "ax.set_ylabel('Video count')",
+                    "ax.set_title('Tần suất lớp D3S theo bản ghi video')",
+                    "ax.set_xlabel('Nhãn')",
+                    "ax.set_ylabel('Số lượng video')",
                     "ax.grid(axis='y', alpha=0.25)",
                     "plt.tight_layout()",
                 ]
@@ -161,23 +160,22 @@ def _build_notebook(
             execution_count=3,
             image_png=_bar_chart_png(
                 Counter(record["label"] for record in records),
-                "D3S class frequency by video record",
-                "Label",
-                "Video count",
+                "Tần suất lớp D3S theo bản ghi video",
+                "Nhãn",
+                "Số lượng video",
                 "#2f80ed",
             ),
         ),
         _code_cell(
             "\n".join(
                 [
-                    "durations = [float(record['duration_sec']) "
-                    "for record in records]",
+                    "durations = [float(record['duration_sec']) for record in records]",
                     "fig, ax = plt.subplots(figsize=(6, 4))",
                     "ax.hist(durations, bins=max(1, min(8, len(durations))), "
                     "color='#27ae60', edgecolor='white')",
-                    "ax.set_title('D3S video duration distribution')",
-                    "ax.set_xlabel('Duration (seconds)')",
-                    "ax.set_ylabel('Video count')",
+                    "ax.set_title('Phân phối thời lượng video D3S')",
+                    "ax.set_xlabel('Thời lượng (giây)')",
+                    "ax.set_ylabel('Số lượng video')",
                     "ax.grid(axis='y', alpha=0.25)",
                     "plt.tight_layout()",
                 ]
@@ -185,9 +183,9 @@ def _build_notebook(
             execution_count=4,
             image_png=_histogram_png(
                 [float(record["duration_sec"]) for record in records],
-                "D3S video duration distribution",
-                "Duration (seconds)",
-                "Video count",
+                "Phân phối thời lượng video D3S",
+                "Thời lượng (giây)",
+                "Số lượng video",
             ),
         ),
         _code_cell(
@@ -199,9 +197,9 @@ def _build_notebook(
                     "fig, ax = plt.subplots(figsize=(6, 4))",
                     "ax.bar(subject_counts.keys(), subject_counts.values(), "
                     "color='#f2994a')",
-                    "ax.set_title('D3S subject balance by video record')",
-                    "ax.set_xlabel('Subject')",
-                    "ax.set_ylabel('Video count')",
+                    "ax.set_title('Sự cân bằng đối tượng D3S theo bản ghi video')",
+                    "ax.set_xlabel('Đối tượng (Subject)')",
+                    "ax.set_ylabel('Số lượng video')",
                     "ax.grid(axis='y', alpha=0.25)",
                     "plt.tight_layout()",
                 ]
@@ -209,25 +207,25 @@ def _build_notebook(
             execution_count=5,
             image_png=_bar_chart_png(
                 Counter(record["subject_id"] for record in records),
-                "D3S subject balance by video record",
-                "Subject",
-                "Video count",
+                "Sự cân bằng đối tượng D3S theo bản ghi video",
+                "Đối tượng (Subject)",
+                "Số lượng video",
                 "#f2994a",
             ),
         ),
         _markdown_cell(
-            "## Subject-Level Split Guidance\n\n"
-            "- Split by subject when subject IDs are available: for example, "
-            "train on two subjects and reserve the third subject for "
-            "validation or testing.\n"
-            "- If a subject cannot be separated, split by complete source "
-            "video or verified contiguous session, never by randomly "
-            "shuffled frames.\n"
-            "- Keep neighboring frames from the same driver/session in the "
-            "same partition so temporal signals do not leak across "
-            "evaluation sets.\n"
-            "- Report `UNKNOWN` and invalid records separately during "
-            "evaluation instead of dropping them silently."
+            "## Hướng dẫn Chia tách Cấp độ Đối tượng\n\n"
+            "- Chia tách theo đối tượng khi có sẵn ID đối tượng: ví dụ, "
+            "huấn luyện trên hai đối tượng và giữ lại đối tượng thứ ba để "
+            "kiểm tra (validation) hoặc thử nghiệm (testing).\n"
+            "- Nếu một đối tượng không thể tách rời, hãy chia tách theo toàn bộ "
+            "video nguồn hoặc phiên làm việc liền kề đã được xác minh, tuyệt đối không "
+            "chia tách bằng cách xáo trộn ngẫu nhiên các khung hình.\n"
+            "- Giữ các khung hình lân cận từ cùng một tài xế/phiên làm việc nằm trong "
+            "cùng một phân vùng để các tín hiệu chuỗi thời gian không bị rò rỉ sang "
+            "tập dữ liệu đánh giá.\n"
+            "- Báo cáo các bản ghi `UNKNOWN` và không hợp lệ một cách riêng biệt trong quá trình "
+            "đánh giá thay vì âm thầm loại bỏ chúng."
         ),
         _code_cell(
             "\n".join(
@@ -237,7 +235,7 @@ def _build_notebook(
                     "    if record['subject_id'] == 'UNKNOWN'",
                     "    or record['label'] == 'UNKNOWN'",
                     "]",
-                    "print(f'Rows needing verified labels: {len(unparsed)}')",
+                    "print(f'Các hàng cần nhãn xác minh: {len(unparsed)}')",
                     "for record in unparsed:",
                     "    print(record['relative_path'])",
                 ]
@@ -271,7 +269,7 @@ def _build_notebook(
 
 
 def _markdown_cell(source: str) -> dict[str, Any]:
-    """Create a markdown notebook cell."""
+    """Tạo một ô markdown cho notebook."""
 
     return {
         "cell_type": "markdown",
@@ -281,7 +279,7 @@ def _markdown_cell(source: str) -> dict[str, Any]:
 
 
 def _display_path(path: Path) -> str:
-    """Return a stable repository-relative path when possible."""
+    """Trả về đường dẫn tương đối ổn định của kho lưu trữ khi có thể."""
 
     resolved_path = path.resolve()
     try:
@@ -291,7 +289,7 @@ def _display_path(path: Path) -> str:
 
 
 def _python_version_text() -> str:
-    """Return the short Python version for notebook metadata."""
+    """Trả về phiên bản Python dạng ngắn cho siêu dữ liệu notebook."""
 
     return f"{sys.version_info.major}.{sys.version_info.minor}"
 
@@ -302,7 +300,7 @@ def _code_cell(
     text_output: str | None = None,
     image_png: str | None = None,
 ) -> dict[str, Any]:
-    """Create an executed code cell with text or PNG output."""
+    """Tạo một ô mã đã thực thi kèm theo kết quả dạng văn bản hoặc PNG."""
 
     outputs: list[dict[str, Any]] = []
     if text_output is not None:
@@ -332,7 +330,7 @@ def _code_cell(
 
 
 def _inventory_table_text(records: Sequence[dict[str, str]]) -> str:
-    """Render compact inventory rows for notebook stdout."""
+    """Hiển thị các hàng inventory dạng gọn gàng để xuất ra stdout của notebook."""
 
     lines: list[str] = []
     for record in records:
@@ -354,14 +352,14 @@ def _inventory_table_text(records: Sequence[dict[str, str]]) -> str:
 
 
 def _unparsed_text(records: Sequence[dict[str, str]]) -> str:
-    """Render rows that still need verified labels."""
+    """Hiển thị các hàng vẫn cần được xác minh nhãn."""
 
     unparsed = [
         record
         for record in records
         if record["subject_id"] == "UNKNOWN" or record["label"] == "UNKNOWN"
     ]
-    lines = [f"Rows needing verified labels: {len(unparsed)}"]
+    lines = [f"Các hàng cần nhãn xác minh: {len(unparsed)}"]
     lines.extend(record["relative_path"] for record in unparsed)
     return "\n".join(lines) + "\n"
 
@@ -373,9 +371,9 @@ def _bar_chart_png(
     ylabel: str,
     color: str,
 ) -> str:
-    """Render a bar chart to base64 PNG."""
+    """Biểu diễn biểu đồ cột thành chuỗi base64 PNG."""
 
-    labels = list(counts.keys()) or ["none"]
+    labels = list(counts.keys()) or ["không có"]
     values = list(counts.values()) or [0]
     fig, ax = plt.subplots(figsize=(6, 4))
     ax.bar(labels, values, color=color)
@@ -393,7 +391,7 @@ def _histogram_png(
     xlabel: str,
     ylabel: str,
 ) -> str:
-    """Render a histogram to base64 PNG."""
+    """Biểu diễn biểu đồ phân phối (histogram) thành chuỗi base64 PNG."""
 
     bins = max(1, min(8, len(values)))
     fig, ax = plt.subplots(figsize=(6, 4))
@@ -407,7 +405,7 @@ def _histogram_png(
 
 
 def _figure_to_base64(fig: plt.Figure) -> str:
-    """Serialize a matplotlib figure to base64 PNG."""
+    """Tuần tự hóa (Serialize) biểu đồ matplotlib thành chuỗi base64 PNG."""
 
     buffer = io.BytesIO()
     fig.savefig(buffer, format="png", dpi=140)

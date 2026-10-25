@@ -9,7 +9,7 @@ mouth:
   yawn_frequency_window: 60.0   # Cửa sổ trượt tính tần suất ngáp (giây)
   yawn_frequency_threshold: 3.0 # Số lần ngáp/phút (drowsy)
 alert:
-  cooldown: 3.0
+  cooldown: 3.0 # Thời gian đệm hồi phục tránh nhấp nháy cảnh báo
   sound_enabled: true
 temporal:
   missing_face_tolerance_frames: 5  # Số frame cho phép mất mặt tạm thời (Hold state)

@@ -221,3 +221,6 @@ __marimo__/
 
 *.zip
 *.mp4
+
+configs/default.txt
+configs/experiment.txt
